@@ -14,7 +14,7 @@ matrix:
 
 install:
   # bitpacker
-  - git clone https://github.com/jonasblixt/bpak.git "C:\bpak" --depth 1 --branch v0.3.0
+  - git clone https://github.com/jonasblixt/bpak.git "C:\bpak" --depth 1 --branch v0.4.0
   # libwdi, specific commit checked out in build step
   - git clone https://github.com/pbatard/libwdi.git "C:\libwdi"
   # install innosetup for creating installers
