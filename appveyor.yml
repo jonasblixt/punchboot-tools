@@ -34,7 +34,7 @@ build_script:
 
   # Build bpak
   - ps: pushd "C:\bpak"
-  - C:\msys64\usr\bin\bash -lc "cd C:/bpak && cmake -B build/ -DBPAK_BUILD_MINIMAL=1 && make -C build/ && make -C build/ install"
+  - C:\msys64\usr\bin\bash -lc "cd C:/bpak && cmake -B build/ -DBPAK_BUILD_MINIMAL=1 -G \"MinGW Makefiles\" && make -C build/ && make -C build/ install"
   - ps: popd
   # Build libwdi
   - ps: pushd "C:\libwdi"
