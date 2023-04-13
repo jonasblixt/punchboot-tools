@@ -451,16 +451,26 @@ err_free_table:
     return NULL;
 }
 
-static PyObject* part_table_install(PyObject* self, PyObject* Py_UNUSED(args))
+static PyObject* part_table_install(PyObject* self, PyObject* args, PyObject* kwds)
 {
     struct pb_session* session = (struct pb_session*)self;
+    static char *kwlist[] = {"part", "variant", NULL};
     int ret;
+    const char *part_uu_str;
+    uuid_t part_uu;
+    int variant = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s|i", kwlist, &part_uu_str, &variant)) {
+        return NULL;
+    }
+
+    uuid_parse(part_uu_str, part_uu);
 
     if (validate_pb_session(session) != 0) {
         return NULL;
     }
 
-    ret = pb_api_partition_install_table(session->ctx);
+    ret = pb_api_partition_install_table(session->ctx, part_uu, variant);
     if (ret != PB_RESULT_OK) {
         return pb_exception_from_rc(ret);
     }
@@ -815,7 +825,7 @@ static PyObject* board_run_command(PyObject *self, PyObject* args, PyObject* kwd
 
 static PyMethodDef PbSession_methods[] = {
     /* Password API */
-    {"authenticate", (PyCFunction)(void(*)(void))authenticate, METH_VARARGS | METH_KEYWORDS, "Authenticate towards punhcboot"},
+    {"authenticate", (PyCFunction)(void(*)(void))authenticate, METH_VARARGS | METH_KEYWORDS, "Authenticate towards punchboot"},
     /* Device API */
     {"device_reset", device_reset, METH_NOARGS, "Resets Device"},
     {"device_get_punchboot_version", device_get_punchboot_version, METH_NOARGS, "Shows punchboot version on device"},
@@ -830,7 +840,7 @@ static PyMethodDef PbSession_methods[] = {
     {"slc_get_revoked_keys", slc_get_revoked_keys, METH_NOARGS, "Reads revoked secure boot Key IDs"},
     /* Part API */
     {"part_list_partitions", part_list_partitions, METH_NOARGS, "Return the partition table as a dictionary, names as keys"},
-    {"part_table_install", part_table_install, METH_NOARGS, "Install partition table"},
+    {"part_table_install", (PyCFunction)(void(*)(void))part_table_install, METH_VARARGS | METH_KEYWORDS, "Install partition table"},
     {"part_resize", (PyCFunction)(void(*)(void))part_resize, METH_VARARGS | METH_KEYWORDS, "Resize partition"},
     {"part_write", (PyCFunction)(void(*)(void))part_write, METH_VARARGS | METH_KEYWORDS, "Write file to partition"},
     {"part_verify", (PyCFunction)(void(*)(void))part_verify, METH_VARARGS | METH_KEYWORDS, "Verify that partition is flashed with specified file"},

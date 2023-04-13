@@ -306,6 +306,15 @@ struct pb_command_resize_part
 } __attribute__((packed));
 
 /**
+ * Install default partition table
+ */
+struct pb_command_install_part_table
+{
+    uint8_t uu[16];
+    uint8_t variant;
+} __attribute__((packed));
+
+/**
  * Read device identifier
  */
 struct pb_result_device_identifier

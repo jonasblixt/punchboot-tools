@@ -111,7 +111,8 @@ int pb_api_partition_read_table(struct pb_context *ctx,
                                 struct pb_partition_table_entry *out,
                                 int *entries);
 
-int pb_api_partition_install_table(struct pb_context *ctx);
+int pb_api_partition_install_table(struct pb_context *ctx,
+                                     const uint8_t *uu, uint8_t variant);
 
 int pb_api_partition_verify(struct pb_context *ctx,
                             uint8_t *uuid,
