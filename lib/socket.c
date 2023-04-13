@@ -58,25 +58,36 @@ static int pb_socket_connect(struct pb_context *ctx)
 static int pb_socket_read(struct pb_context *ctx, void *bfr, size_t sz)
 {
     struct pb_socket_private *priv = PB_SOCKET_PRIVATE(ctx);
+    uintptr_t buf_p = (uintptr_t) bfr;
+    size_t bytes_to_xfer = sz;
 
-    ssize_t bytes = read(priv->fd, bfr, sz);
+    while (bytes_to_xfer > 0) {
+        ssize_t bytes = read(priv->fd, (void *) buf_p, sz);
+        if (bytes < 0)
+            return -PB_RESULT_ERROR;
+        bytes_to_xfer -= bytes;
+        buf_p += bytes;
+    }
 
-    if (bytes == (ssize_t) sz)
-        return PB_RESULT_OK;
-
-    return -PB_RESULT_ERROR;
+    return 0;
 }
 
 static int pb_socket_write(struct pb_context *ctx, const void *bfr, size_t sz)
 {
     struct pb_socket_private *priv = PB_SOCKET_PRIVATE(ctx);
+    uintptr_t buf_p = (uintptr_t) bfr;
+    size_t bytes_to_xfer = sz;
 
-    ssize_t bytes = write(priv->fd, bfr, sz);
+    while (bytes_to_xfer > 0) {
+        ssize_t bytes = write(priv->fd, bfr, sz);
 
-    if (bytes == (ssize_t) sz)
-        return PB_RESULT_OK;
+        if (bytes < 0)
+            return -PB_RESULT_ERROR;
+        bytes_to_xfer -= bytes;
+        buf_p += bytes;
+    }
 
-    return -PB_RESULT_ERROR;
+    return 0;
 }
 
 static int pb_socket_init(struct pb_context *ctx)
