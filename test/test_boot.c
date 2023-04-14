@@ -10,6 +10,8 @@
 #include "command.h"
 #include "common.h"
 
+static uint8_t tbl_uuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62" \
+                            "\x01\x4c\xfa\x73\x5c\xe1";
 TEST(boot)
 {
     int rc;
@@ -35,7 +37,7 @@ TEST(boot)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Install partition table*/
-    rc = pb_api_partition_install_table(ctx);
+    rc = pb_api_partition_install_table(ctx, tbl_uuid, 0);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Boot */
@@ -76,7 +78,7 @@ TEST(boot_non_bootable)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Install partition table*/
-    rc = pb_api_partition_install_table(ctx);
+    rc = pb_api_partition_install_table(ctx, tbl_uuid, 0);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Boot */
@@ -117,7 +119,7 @@ TEST(boot_invalid_uuid)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Install partition table*/
-    rc = pb_api_partition_install_table(ctx);
+    rc = pb_api_partition_install_table(ctx, tbl_uuid, 0);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Boot */
@@ -170,7 +172,7 @@ TEST(boot_ram)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Install partition table*/
-    rc = pb_api_partition_install_table(ctx);
+    rc = pb_api_partition_install_table(ctx, tbl_uuid, 0);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Boot */
@@ -213,7 +215,7 @@ TEST(activate_part_not_bootable)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Install partition table*/
-    rc = pb_api_partition_install_table(ctx);
+    rc = pb_api_partition_install_table(ctx, tbl_uuid, 0);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Activate partition */
@@ -254,7 +256,7 @@ TEST(activate_part)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Install partition table*/
-    rc = pb_api_partition_install_table(ctx);
+    rc = pb_api_partition_install_table(ctx, tbl_uuid, 0);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Activate partition */

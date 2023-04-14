@@ -10,6 +10,9 @@
 #include "command.h"
 #include "common.h"
 
+static uint8_t tbl_uuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62" \
+                            "\x01\x4c\xfa\x73\x5c\xe1";
+
 TEST(api_partition)
 {
     int rc;
@@ -49,7 +52,7 @@ TEST(api_partition)
 
 
     /* Install partition table*/
-    rc = pb_api_partition_install_table(ctx);
+    rc = pb_api_partition_install_table(ctx, tbl_uuid, 0);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     entries = 16;
@@ -99,7 +102,7 @@ TEST(part_verify)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Install partition table*/
-    rc = pb_api_partition_install_table(ctx);
+    rc = pb_api_partition_install_table(ctx, tbl_uuid, 0);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     /* Verify partition */
@@ -141,7 +144,7 @@ TEST(part_verify_fail)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Install partition table*/
-    rc = pb_api_partition_install_table(ctx);
+    rc = pb_api_partition_install_table(ctx, tbl_uuid, 0);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     /* Verify partition */
@@ -182,7 +185,7 @@ TEST(part_verify_invalid_part)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Install partition table*/
-    rc = pb_api_partition_install_table(ctx);
+    rc = pb_api_partition_install_table(ctx, tbl_uuid, 0);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     /* Verify partition */
@@ -225,7 +228,7 @@ TEST(read_bpak)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Install partition table*/
-    rc = pb_api_partition_install_table(ctx);
+    rc = pb_api_partition_install_table(ctx, tbl_uuid, 0);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Try to read bpak header from partition */

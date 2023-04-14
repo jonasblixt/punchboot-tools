@@ -619,9 +619,11 @@ int action_part(int argc, char **argv)
     bool flag_dump = false;
     bool flag_resize = false;
     bool flag_force = false;
+    int install_variant = 0;
     size_t block_write_offset = 0;
     size_t resize_blocks = 0;
     const char *part_uuid = NULL;
+    uuid_t part_uu;
     const char *filename = NULL;
 
     struct option long_options[] =
@@ -635,6 +637,7 @@ int action_part(int argc, char **argv)
         {"show",        no_argument,       0,  's' },
         {"part",        required_argument, 0,  'p' },
         {"install",     no_argument,       0,  'i' },
+        {"variant",     required_argument, 0,  'I' },
         {"list",        no_argument,       0,  'l' },
         {"offset",      required_argument, 0,  'O' },
         {"dump",        required_argument, 0,  'D' },
@@ -643,7 +646,7 @@ int action_part(int argc, char **argv)
         {0,             0,                 0,   0  }
     };
 
-    while ((opt = getopt_long(argc, argv, "hvt:w:silp:c:d:D:R:F",
+    while ((opt = getopt_long(argc, argv, "hvt:w:silp:c:d:D:R:FI:",
                    long_options, &long_index )) != -1)
     {
         switch (opt)
@@ -672,6 +675,10 @@ int action_part(int argc, char **argv)
             break;
             case 'i':
                 flag_install = true;
+            break;
+            case 'I':
+                flag_install = true;
+                install_variant = strtol(optarg, NULL, 0);
             break;
             case 'w':
                 flag_write = true;
@@ -713,6 +720,13 @@ int action_part(int argc, char **argv)
         return 0;
     }
 
+    if (part_uuid != NULL) {
+        if (uuid_parse(part_uuid, part_uu) != 0) {
+            fprintf(stderr, "Error: Invalid UUID\n");
+            return -PB_RESULT_INVALID_ARGUMENT;
+        }
+    }
+
     rc = transport_init_helper(&ctx, transport, device_uuid);
 
     if (rc != PB_RESULT_OK)
@@ -740,7 +754,7 @@ int action_part(int argc, char **argv)
     if (flag_list)
         rc = part_list(ctx);
     else if (flag_install)
-        rc = pb_api_partition_install_table(ctx);
+        rc = pb_api_partition_install_table(ctx, part_uu, install_variant);
     else if (flag_write)
         rc = part_write(ctx, filename, part_uuid, block_write_offset);
     else if (flag_verify)

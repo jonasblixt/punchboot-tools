@@ -4,14 +4,8 @@ from setuptools import setup
 from setuptools import Extension
 import re
 
-def read_version():
-    with open("../include/pb-tools/pb-tools.h", "r") as f:
-        return re.search(r"PB_TOOLS_VERSION_STRING \"(.*)\"$",
-                         f.read(),
-                         re.MULTILINE).group(1)
-
 setup(name='punchboot',
-      version=read_version(),
+      version="1.0.0",
       description="Punchboot tools python wrapper",
       author="Jonas Blixt",
       author_email="jonpe960@gmail.com",

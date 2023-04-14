@@ -94,15 +94,20 @@ PB_EXPORT int pb_api_partition_read_table(struct pb_context *ctx,
     return result.result_code;
 }
 
-PB_EXPORT int pb_api_partition_install_table(struct pb_context *ctx)
+PB_EXPORT int pb_api_partition_install_table(struct pb_context *ctx,
+                                             const uint8_t *uu, uint8_t variant)
 {
     int rc;
     struct pb_command cmd;
+    struct pb_command_install_part_table install_tbl;
     struct pb_result result;
 
     ctx->d(ctx, 2, "%s: call\n", __func__);
+    memset(&install_tbl, 0, sizeof(install_tbl));
+    memcpy(install_tbl.uu, uu, 16);
+    install_tbl.variant = variant;
 
-    pb_wire_init_command(&cmd, PB_CMD_PART_TBL_INSTALL);
+    pb_wire_init_command2(&cmd, PB_CMD_PART_TBL_INSTALL, &install_tbl, sizeof(install_tbl));
 
     rc = ctx->write(ctx, &cmd, sizeof(cmd));
 

@@ -1,10 +1,10 @@
 #ifndef PB_TOOLS_PB_TOOLS_H
 #define PB_TOOLS_PB_TOOLS_H
 
-#define PB_TOOLS_VERSION_MAJOR 0
-#define PB_TOOLS_VERSION_MINOR 3
-#define PB_TOOLS_VERSION_PATCH 4
-#define PB_TOOLS_VERSION_STRING "0.3.4"
+#define PB_TOOLS_VERSION_MAJOR 1
+#define PB_TOOLS_VERSION_MINOR 0
+#define PB_TOOLS_VERSION_PATCH 0
+#define PB_TOOLS_VERSION_STRING "1.0.0"
 
 #define PB_EXPORT __attribute__((visibility("default")))
 
