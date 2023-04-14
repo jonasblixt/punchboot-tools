@@ -47,7 +47,7 @@ foreach(c_test IN LISTS C_TESTS)
     )
     target_compile_options(${c_test} PRIVATE
         ${UUID_CFLAGS}
-        -std=c11
+        -std=gnu11
     )
     add_test(${c_test} ${c_test})
 endforeach()
