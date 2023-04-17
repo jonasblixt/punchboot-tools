@@ -248,24 +248,15 @@ static PyObject* slc_revoke_key(PyObject* self, PyObject* args, PyObject* kwds)
 {
     struct pb_session* session = (struct pb_session*)self;
     static char *kwlist[] = {"key_id", NULL};
-    const char* key = NULL;
-    char* end;
-    uint32_t key_id;
+    unsigned int key_id;
 
     int ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "I", kwlist, &key_id)) {
         return NULL;
     }
 
     if (validate_pb_session(session) != 0) {
-        return NULL;
-    }
-
-    errno = 0;
-    key_id = strtoul(key, &end, 16);
-    if (key_id == 0 || errno == ERANGE || key != end || *end != '\0') {
-        PyErr_SetString(PyExc_ValueError, "Invalid Key ID");
         return NULL;
     }
 
@@ -325,7 +316,7 @@ static PyObject* slc_get_active_keys(PyObject* self, PyObject* Py_UNUSED(args))
     }
 
     for (int i = 0; i < key_count; i++) {
-        PyList_SET_ITEM(keylist, i, PyUnicode_FromFormat("0x%x", active_keys[i]));
+        PyList_SET_ITEM(keylist, i, PyLong_FromLong(active_keys[i]));
     }
 
     return keylist;
@@ -361,7 +352,7 @@ static PyObject* slc_get_revoked_keys(PyObject* self, PyObject* Py_UNUSED(args))
     }
 
     for (int i = 0; i < key_count; i++) {
-        PyList_SET_ITEM(keylist, i, PyUnicode_FromFormat("0x%x", revoked_keys[i]));
+        PyList_SET_ITEM(keylist, i, PyLong_FromLong(revoked_keys[i]));
     }
 
     return keylist;
