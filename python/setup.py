@@ -5,7 +5,7 @@ from setuptools import Extension
 import re
 
 setup(name='punchboot',
-      version="1.0.0",
+      version="1.0.1",
       description="Punchboot tools python wrapper",
       author="Jonas Blixt",
       author_email="jonpe960@gmail.com",
