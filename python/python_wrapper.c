@@ -801,6 +801,8 @@ static PyObject* board_run_command(PyObject *self, PyObject* args, PyObject* kwd
 
     cmd_enc = pb_crc32(0, (unsigned char*)cmd, strlen(cmd));
 
+    memset(response, 0, sizeof(response));
+
     ret = pb_api_board_command(session->ctx, cmd_enc, cmd_args, cmd_args_len,
                                 response, sizeof(response));
     if (ret != PB_RESULT_OK) {
