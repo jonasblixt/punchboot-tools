@@ -10,4 +10,6 @@
 
 #define PB_EXPORT __attribute__((visibility("default")))
 
+const char * pb_api_version(void);
+
 #endif

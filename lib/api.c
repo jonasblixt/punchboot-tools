@@ -46,5 +46,7 @@ PB_EXPORT int pb_api_free_context(struct pb_context *ctx)
     return PB_RESULT_OK;
 }
 
-
-
+PB_EXPORT const char * pb_api_version(void)
+{
+    return PB_TOOLS_VERSION_STRING;
+}
