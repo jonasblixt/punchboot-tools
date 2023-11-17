@@ -615,6 +615,7 @@ int action_part(int argc, char **argv)
     bool flag_install = false;
     bool flag_write = false;
     bool flag_verify = false;
+    bool flag_erase = false;
     bool flag_show = false;
     bool flag_dump = false;
     bool flag_resize = false;
@@ -634,6 +635,7 @@ int action_part(int argc, char **argv)
         {"device",      required_argument, 0,  'd' },
         {"write",       required_argument, 0,  'w' },
         {"verify",      required_argument, 0,  'c' },
+        {"erase",       no_argument,       0,  'e' },
         {"show",        no_argument,       0,  's' },
         {"part",        required_argument, 0,  'p' },
         {"install",     no_argument,       0,  'i' },
@@ -646,7 +648,7 @@ int action_part(int argc, char **argv)
         {0,             0,                 0,   0  }
     };
 
-    while ((opt = getopt_long(argc, argv, "hvt:w:silp:c:d:D:R:FI:",
+    while ((opt = getopt_long(argc, argv, "hvt:w:silp:c:d:D:R:FI:e",
                    long_options, &long_index )) != -1)
     {
         switch (opt)
@@ -687,6 +689,9 @@ int action_part(int argc, char **argv)
             case 'c':
                 flag_verify = true;
                 filename = (const char *) optarg;
+            break;
+            case 'e':
+                flag_erase = true;
             break;
             case 'D':
                 flag_dump = true;
@@ -746,7 +751,8 @@ int action_part(int argc, char **argv)
     if ((flag_write && !part_uuid) ||
         (flag_dump && !part_uuid)  ||
         (flag_resize && !part_uuid) ||
-        (flag_verify && !part_uuid)) {
+        (flag_verify && !part_uuid) ||
+        (flag_erase && !part_uuid)) {
         fprintf(stderr, "Error: missing required --part argument\n");
         goto err_free_ctx_out;
     }
@@ -759,6 +765,8 @@ int action_part(int argc, char **argv)
         rc = part_write(ctx, filename, part_uuid, block_write_offset);
     else if (flag_verify)
         rc = part_verify(ctx, filename, part_uuid, block_write_offset);
+    else if (flag_erase)
+        rc = pb_api_partition_erase(ctx, part_uu);
     else if (flag_show)
         rc = part_show(ctx, part_uuid);
     else if (flag_dump)
