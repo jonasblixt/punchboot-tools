@@ -49,3 +49,5 @@ python/punchboot.egg-info/
 docs/_build
 docs/latex
 tags
+__pycache__
+*.egg-info
