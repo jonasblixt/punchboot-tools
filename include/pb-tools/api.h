@@ -164,7 +164,7 @@ int pb_api_board_command(struct pb_context *ctx,
                          const void *request,
                          size_t request_size,
                          void *response,
-                         size_t response_size);
+                         size_t *response_size);
 
 int pb_api_board_status(struct pb_context *ctx,
                         char *status,

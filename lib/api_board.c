@@ -9,7 +9,7 @@ PB_EXPORT int pb_api_board_command(struct pb_context *ctx,
                          const void *request,
                          size_t request_size,
                          void *response,
-                         size_t response_size)
+                         size_t *response_size)
 {
     int rc;
     struct pb_command cmd;
@@ -26,7 +26,7 @@ PB_EXPORT int pb_api_board_command(struct pb_context *ctx,
     memset(&board_command, 0, sizeof(board_command));
     board_command.command = board_command_id;
     board_command.request_size = request_size;
-    board_command.response_buffer_size = response_size;
+    board_command.response_buffer_size = *response_size;
 
     pb_wire_init_command2(&cmd, PB_CMD_BOARD_COMMAND, &board_command,
                                                       sizeof(board_command));
@@ -69,10 +69,12 @@ PB_EXPORT int pb_api_board_command(struct pb_context *ctx,
 
     memcpy(&board_result, result.response, sizeof(board_result));
 
-    if (board_result.size > response_size)
+    if (board_result.size > *response_size)
     {
         return -PB_RESULT_ERROR;
     }
+
+    *response_size = board_result.size;
 
     if (board_result.size)
     {
