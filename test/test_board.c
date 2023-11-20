@@ -19,6 +19,7 @@ TEST(board_command)
                                 "\x01\x4c\xfa\x73\x5c\xe1";
 
     char response_buffer[1024];
+    size_t response_len = sizeof(response_buffer);
 
     test_command_loop_set_authenticated(true);
 
@@ -39,7 +40,7 @@ TEST(board_command)
     memset(response_buffer, 0, strlen(response_buffer));
     /* Call board command  */
     rc = pb_api_board_command(ctx, 1, request, strlen(request),
-                                      response_buffer, sizeof(response_buffer));
+                                      response_buffer, &response_len);
     ASSERT_EQ(rc, PB_RESULT_OK);
     printf("%zu '%s'\n", strlen(response_buffer), response_buffer);
     ASSERT_MEMORY((char *) response_buffer, "Hello", 5);
