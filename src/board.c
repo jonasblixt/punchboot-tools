@@ -28,7 +28,8 @@ static int board_command(struct pb_context *ctx, int command,
                                                  const char *args)
 {
     int rc;
-    char *result_buffer = malloc(4096);
+    char result_buffer[4096];
+    size_t result_size = sizeof(result_buffer);
     size_t args_len = 0;
 
     if (args)
@@ -39,11 +40,10 @@ static int board_command(struct pb_context *ctx, int command,
     memset(result_buffer, 0, 4096);
 
     rc = pb_api_board_command(ctx, command, args, args_len,
-                                   result_buffer, 4096);
+                                   result_buffer, &result_size);
 
     printf("%s\n", result_buffer);
 
-    free(result_buffer);
     return rc;
 }
 
