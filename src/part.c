@@ -20,8 +20,7 @@
 
 #define PART_VERIFY_CHUNK_SZ (1024*1024)
 
-static int part_verify(struct pb_context *ctx, const char *filename,
-                        const char *part_uuid, size_t offset)
+static int part_verify(struct pb_context *ctx, const char *filename, const char *part_uuid)
 {
     struct bpak_header header;
     bool bpak_file = false;
@@ -31,8 +30,6 @@ static int part_verify(struct pb_context *ctx, const char *filename,
     FILE *fp = fopen(filename, "rb");
     mbedtls_sha256_context sha256;
     size_t file_size = 0;
-
-    (void) offset;
 
     mbedtls_sha256_init(&sha256);
     mbedtls_sha256_starts_ret(&sha256, 0);
@@ -465,7 +462,6 @@ int action_part(int argc, char **argv)
     bool flag_resize = false;
     bool flag_force = false;
     int install_variant = 0;
-    size_t block_write_offset = 0;
     size_t resize_blocks = 0;
     const char *part_uuid = NULL;
     uuid_t part_uu;
@@ -485,7 +481,6 @@ int action_part(int argc, char **argv)
         {"install",     no_argument,       0,  'i' },
         {"variant",     required_argument, 0,  'I' },
         {"list",        no_argument,       0,  'l' },
-        {"offset",      required_argument, 0,  'O' },
         {"dump",        required_argument, 0,  'D' },
         {"resize",      required_argument, 0,  'R' },
         {"force",       no_argument,       0,  'F' },
@@ -515,9 +510,6 @@ int action_part(int argc, char **argv)
             break;
             case 'l':
                 flag_list = true;
-            break;
-            case 'O':
-                block_write_offset = strtol(optarg, NULL, 0);
             break;
             case 'i':
                 flag_install = true;
@@ -606,9 +598,9 @@ int action_part(int argc, char **argv)
     else if (flag_install)
         rc = pb_api_partition_install_table(ctx, part_uu, install_variant);
     else if (flag_write)
-        rc = part_write(ctx, filename, part_uuid, block_write_offset);
+        rc = part_write(ctx, filename, part_uuid);
     else if (flag_verify)
-        rc = part_verify(ctx, filename, part_uuid, block_write_offset);
+        rc = part_verify(ctx, filename, part_uuid);
     else if (flag_erase)
         rc = pb_api_partition_erase(ctx, part_uu);
     else if (flag_show)
