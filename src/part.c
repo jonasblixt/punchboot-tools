@@ -15,6 +15,8 @@
 #include "uuid/uuid.h"
 #include "sha256.h"
 
+#define PART_VERIFY_CHUNK_SZ (1024*1024)
+
 static int part_verify(struct pb_context *ctx, const char *filename,
                         const char *part_uuid, size_t offset)
 {
@@ -71,7 +73,7 @@ static int part_verify(struct pb_context *ctx, const char *filename,
         fseek(fp, 0, SEEK_SET);
     }
 
-    unsigned char *chunk_buffer = malloc(1024*1024);
+    unsigned char *chunk_buffer = malloc(PART_VERIFY_CHUNK_SZ);
 
     if (!chunk_buffer)
     {
@@ -79,7 +81,7 @@ static int part_verify(struct pb_context *ctx, const char *filename,
         goto err_out;
     }
 
-    while ((read_bytes = fread(chunk_buffer, 1, 1024*1024, fp)) > 0)
+    while ((read_bytes = fread(chunk_buffer, 1, PART_VERIFY_CHUNK_SZ, fp)) > 0)
     {
         rc = mbedtls_sha256_update_ret(&sha256, chunk_buffer, read_bytes);
 
