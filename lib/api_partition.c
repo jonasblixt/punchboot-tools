@@ -289,3 +289,149 @@ PB_EXPORT int pb_api_partition_resize(struct pb_context *ctx, uint8_t *uuid,
                                         pb_error_string(result.result_code));
     return result.result_code;
 }
+
+static int read_part_table(struct pb_context* ctx, struct pb_partition_table_entry** table, int* entries)
+{
+    struct pb_partition_table_entry *tbl;
+    int read_entries = 256;
+    int ret;
+
+    tbl = malloc(sizeof(*tbl) * read_entries);
+    if (!tbl) {
+        return -PB_RESULT_NO_MEMORY;
+    }
+
+    ret = pb_api_partition_read_table(ctx, tbl, &read_entries);
+    if (ret != PB_RESULT_OK) {
+        free(tbl);
+        return ret;
+    }
+
+    if (read_entries == 0) {
+        free(tbl);
+        return -PB_RESULT_ERROR;  // TODO: Better error?
+    }
+
+    *table = tbl;
+    *entries = read_entries;
+    return 0;
+}
+
+PB_EXPORT int pb_api_partition_write(struct pb_context *ctx,
+                                     int file_fd,
+                                     uint8_t *uuid)
+{
+    struct pb_partition_table_entry *tbl;
+    int tbl_entries;
+    struct pb_device_capabilities caps;
+    size_t chunk_size = 0;
+    uint8_t *chunk_buffer = NULL;
+    uint8_t buffer_id = 0;
+    struct bpak_header header;
+    size_t part_size = 0;
+    size_t part_block_size = 0;
+    bool part_found = false;
+    size_t offset = 0;
+    ssize_t read_bytes = 0;
+    bool bpak_file = false;
+    int rc;
+
+    if (lseek(file_fd, 0, SEEK_SET) == (off_t) -1) {
+        return -PB_RESULT_IO_ERROR;
+    }
+
+    rc = pb_api_device_read_caps(ctx, &caps);
+    if (rc != PB_RESULT_OK) {
+        return rc;
+    }
+
+    chunk_size = caps.chunk_transfer_max_bytes;
+
+    chunk_buffer = malloc(chunk_size);
+    if (!chunk_buffer) {
+        return -PB_RESULT_MEM_ERROR;
+    }
+
+    rc = read_part_table(ctx, &tbl, &tbl_entries);
+    if (rc != PB_RESULT_OK) {
+        goto err_free_buf;
+    }
+
+    for (int i = 0; i < tbl_entries; i++) {
+        if (memcmp(tbl[i].uuid, uuid, 16) == 0) {
+            part_block_size = tbl[i].block_size;
+            part_size = (tbl[i].last_block - tbl[i].first_block + 1) * part_block_size;
+            part_found = true;
+            break;
+        }
+    }
+    free(tbl);
+
+    if (!part_found) {
+        rc = -PB_RESULT_NOT_FOUND;
+        goto err_free_buf;
+    }
+
+    rc = pb_api_stream_init(ctx, uuid);
+    if (rc != PB_RESULT_OK) {
+        goto err_free_buf;
+    }
+
+    read_bytes = read(file_fd, &header, sizeof(header));
+
+    if (read_bytes < 0) {
+        rc = -PB_RESULT_IO_ERROR;
+        goto err_free_buf;
+    } else if (read_bytes == sizeof(header) &&
+               bpak_valid_header(&header) == BPAK_OK) {
+        bpak_file = true;
+    } else {
+        lseek(file_fd, 0, SEEK_SET);
+    }
+
+    if (bpak_file) {
+        offset = part_size  - sizeof(header);
+
+        rc = pb_api_stream_prepare_buffer(ctx, buffer_id, &header, sizeof(header));
+
+        if (rc != PB_RESULT_OK) {
+            goto err_free_buf;
+        }
+
+        rc = pb_api_stream_write_buffer(ctx, buffer_id, offset, sizeof(header));
+
+        if (rc != PB_RESULT_OK) {
+            goto err_free_buf;
+        }
+
+        buffer_id = (buffer_id + 1) % caps.stream_no_of_buffers;
+        offset = 0;
+    }
+
+    while ((read_bytes = read(file_fd, chunk_buffer, chunk_size)) > 0) {
+        rc = pb_api_stream_prepare_buffer(ctx, buffer_id, chunk_buffer, read_bytes);
+
+        if (rc != PB_RESULT_OK) {
+            goto err_free_buf;
+        }
+
+        rc = pb_api_stream_write_buffer(ctx, buffer_id, offset, read_bytes);
+
+        if (rc != PB_RESULT_OK) {
+            goto err_free_buf;
+        }
+
+        buffer_id = (buffer_id + 1) % caps.stream_no_of_buffers;
+        offset += read_bytes;
+    }
+
+    if (read_bytes < 0) {
+        rc = -PB_RESULT_IO_ERROR;
+        goto err_free_buf;
+    }
+
+err_free_buf:
+    pb_api_stream_finalize(ctx);
+    free(chunk_buffer);
+    return rc;
+}
