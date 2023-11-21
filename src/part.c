@@ -5,7 +5,10 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <stdbool.h>
+#include <fcntl.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <time.h>
 #include <bpak/bpak.h>
 #include <bpak/utils.h>
@@ -105,192 +108,31 @@ err_out:
     return rc;
 }
 
-static int part_write(struct pb_context *ctx, const char *filename,
-                        const char *part_uuid, size_t block_write_offset)
+static int part_write(struct pb_context *ctx, const char *filename, const char *part_uuid)
 {
-    uint8_t *chunk_buffer = NULL;
-    struct pb_device_capabilities caps;
-    struct bpak_header header;
-    uuid_t uu_part;
     int rc;
-    int buffer_id = 0;
-    size_t chunk_size = 0;
-    struct pb_partition_table_entry *tbl;
-    int entries = 128;
-    FILE *fp = NULL;
-    size_t file_size_bytes = 0;
-    struct timeval ts1, ts2;
-
-    fp = fopen(filename, "rb");
-
-    if (!fp)
-    {
-        fprintf(stderr, "Error: Could not open '%s'\n", filename);
-        return -PB_RESULT_ERROR;
-    }
-
-    if (fseek(fp, -1, SEEK_END) != 0) {
-        rc = -PB_RESULT_IO_ERROR;
-        goto err_close_fp_out;
-    }
-
-    file_size_bytes = ftell(fp);
-
-    if (fseek(fp, 0, SEEK_SET) != 0) {
-        rc = -PB_RESULT_IO_ERROR;
-        goto err_close_fp_out;
-    }
-
-    /* Read device capabilities */
-    rc = pb_api_device_read_caps(ctx, &caps);
-
-    if (rc != PB_RESULT_OK) {
-        goto err_close_fp_out;
-    }
+    int fd;
+    uuid_t uu_part;
 
     if (uuid_parse(part_uuid, uu_part) != 0) {
         fprintf(stderr, "Error: Invalid UUID\n");
-        rc = -PB_RESULT_INVALID_ARGUMENT;
-        goto err_close_fp_out;
+        return -PB_RESULT_INVALID_ARGUMENT;
     }
-    chunk_size = caps.chunk_transfer_max_bytes;
 
-    /* Read partition table */
+    fd = open(filename, O_RDONLY);
 
-    tbl = malloc(sizeof(struct pb_partition_table_entry) * entries);
+    if (fd < 0) {
+        fprintf(stderr, "Error: Could not open '%s'\n", filename);
+        return -PB_RESULT_NOT_FOUND;
+    }
 
-    rc = pb_api_partition_read_table(ctx, tbl, &entries);
-
-    if (rc != PB_RESULT_OK)
-        goto err_free_entries;
-
-    if (!entries)
-        goto err_free_entries;
-
-    if (pb_get_verbosity() > 0)
-    {
+    if (pb_get_verbosity() > 0) {
         printf("Writing '%s' to '%s'\n", filename, part_uuid);
     }
 
-    chunk_buffer = malloc(chunk_size + 1);
+    rc = pb_api_partition_write(ctx, fd, uu_part);
 
-    if (!chunk_buffer) {
-        rc = -PB_RESULT_NO_MEMORY;
-        goto err_free_entries;
-    }
-
-    rc = pb_api_stream_init(ctx, uu_part);
-
-    if (rc != PB_RESULT_OK) {
-        fprintf(stderr, "Error: Stream initialization failed (%i)\n", rc);
-        goto err_out;
-    }
-
-    size_t read_bytes = 0;
-    size_t offset = 0;
-    bool bpak_file = false;
-
-    read_bytes = fread(&header, 1, sizeof(header), fp);
-
-    if (read_bytes == sizeof(header) &&
-        (bpak_valid_header(&header) == BPAK_OK))
-    {
-        if (pb_get_verbosity() > 1)
-        {
-            printf("Detected bpak header\n");
-        }
-
-        bpak_file = true;
-    }
-    else
-    {
-        fseek(fp, 0, SEEK_SET);
-    }
-
-    gettimeofday(&ts1, NULL);
-
-    if (bpak_file)
-    {
-        rc = pb_api_stream_prepare_buffer(ctx, buffer_id,
-                                            &header, sizeof(header));
-
-        if (rc != PB_RESULT_OK)
-        {
-            fprintf(stderr, "Error: Could not write header");
-            goto err_out;
-        }
-
-        for (int i = 0; i < entries; i++) {
-            if (uuid_compare(tbl[i].uuid, uu_part) == 0) {
-                offset = tbl[i].block_size * \
-                         (tbl[i].last_block - tbl[i].first_block + 1) - \
-                         sizeof(header);
-            }
-        }
-
-        if (pb_get_verbosity() > 1) {
-            printf("Writing header at %zu\n", offset);
-        }
-
-        rc = pb_api_stream_write_buffer(ctx, buffer_id, offset, sizeof(header));
-
-        if (rc != PB_RESULT_OK) {
-            fprintf(stderr, "Error: Could not write header");
-            goto err_out;
-        }
-
-        buffer_id = (buffer_id + 1) % caps.stream_no_of_buffers;
-        offset = 0;
-    }
-
-    if (bpak_file && block_write_offset)
-    {
-        fprintf(stderr,
-                    "Detected bpak header and offset parameter, ignoring offset\n");
-    }
-    else
-    {
-        offset += (block_write_offset * 512);
-    }
-
-    while ((read_bytes = fread(chunk_buffer, 1, chunk_size, fp)) > 0)
-    {
-        rc = pb_api_stream_prepare_buffer(ctx, buffer_id, chunk_buffer,
-                                                read_bytes);
-
-        if (rc != PB_RESULT_OK)
-            break;
-
-        rc = pb_api_stream_write_buffer(ctx, buffer_id, offset,
-                                                read_bytes);
-
-        if (rc != PB_RESULT_OK)
-            break;
-
-        buffer_id = (buffer_id + 1) % caps.stream_no_of_buffers;
-        offset += read_bytes;
-    }
-
-    pb_api_stream_finalize(ctx);
-
-    gettimeofday(&ts2, NULL);
-
-    long time_us = (ts2.tv_sec*1E6 + ts2.tv_usec) -
-                  (ts1.tv_sec*1E6 + ts1.tv_usec);
-
-    if (pb_get_verbosity())
-    {
-        printf("Wrote %zu bytes in %.1f ms (%.1f MByte/s)\n",
-            file_size_bytes, time_us / 1000.0,
-            (float) (file_size_bytes/1024/1024) / time_us*1E6);
-    }
-
-err_out:
-    free(chunk_buffer);
-err_free_entries:
-    free(tbl);
-err_close_fp_out:
-    fclose(fp);
+    close(fd);
     return rc;
 }
 
