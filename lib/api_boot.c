@@ -15,7 +15,10 @@ PB_EXPORT int pb_api_boot_activate(struct pb_context *ctx, uint8_t *uuid)
     ctx->d(ctx, 2, "%s: call\n", __func__);
 
     memset(&activate, 0, sizeof(activate));
-    memcpy(activate.uuid, uuid, 16);
+
+    if (uuid != NULL) {
+        memcpy(activate.uuid, uuid, 16);
+    }
 
     pb_wire_init_command2(&cmd, PB_CMD_PART_ACTIVATE, &activate,
                                     sizeof(activate));
