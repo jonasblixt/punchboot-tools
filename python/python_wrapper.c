@@ -513,6 +513,38 @@ static PyObject* part_write(PyObject* self, PyObject* args, PyObject* kwds)
     Py_RETURN_NONE;
 }
 
+static PyObject* part_read(PyObject* self, PyObject* args, PyObject* kwds)
+{
+    struct pb_session* session = (struct pb_session*)self;
+    static char *kwlist[] = {"file", "uuid", NULL};
+    PyObject* file = NULL;
+    int file_fd = -1;
+    uint8_t *part_uu = NULL;
+    size_t part_uu_len = 0;
+    int rc;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "Oy#", kwlist, &file, &part_uu, &part_uu_len)) {
+        return NULL;
+    }
+
+    if (validate_pb_session(session) != 0) {
+        return NULL;
+    }
+
+    file_fd = PyObject_AsFileDescriptor(file);
+    if (file_fd == -1) {
+        PyErr_SetString(PyExc_TypeError, "Invalid file descriptor");
+        return NULL;
+    }
+
+    rc = pb_api_partition_read(session->ctx, file_fd, part_uu);
+
+    if (rc != 0) {
+        pb_exception_from_rc(rc);
+    }
+
+    Py_RETURN_NONE;
+}
 
 static PyObject* part_erase(PyObject*self, PyObject* args, PyObject *kwds)
 {
@@ -674,6 +706,7 @@ static PyMethodDef PbSession_methods[] = {
     {"part_get_partitions", part_get_partitions, METH_NOARGS, "Return available partitions"},
     {"part_table_install", (PyCFunction)(void(*)(void))part_table_install, METH_VARARGS | METH_KEYWORDS, "Install partition table"},
     {"part_write", (PyCFunction)(void(*)(void))part_write, METH_VARARGS | METH_KEYWORDS, "Write file to partition"},
+    {"part_read", (PyCFunction)(void(*)(void))part_read, METH_VARARGS | METH_KEYWORDS, "Write file to partition"},
     {"part_verify", (PyCFunction)(void(*)(void))part_verify, METH_VARARGS | METH_KEYWORDS, "Verify that partition is flashed with specified file"},
     {"part_erase", (PyCFunction)(void(*)(void))part_erase, METH_VARARGS | METH_KEYWORDS, "Erase the contents of a partition"},
     /* Boot API */

@@ -20,6 +20,7 @@ class PartitionFlags(IntEnum):
     FLAG_OTP = (1,)
     FLAG_WRITABLE = (2,)
     FLAG_ERASE_BEFORE_WRITE = (3,)
+    FLAG_READABLE = (6,)
 
 
 @dataclass(frozen=True)
@@ -54,4 +55,5 @@ class Partition:
     bootable: bool
     otp: bool
     writable: bool
+    readable: bool
     erase_before_write: bool

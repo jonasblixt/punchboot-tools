@@ -75,6 +75,7 @@ class Session(object):
                 bool(p[5] & (1 << PartitionFlags.FLAG_BOOTABLE)),
                 bool(p[5] & (1 << PartitionFlags.FLAG_OTP)),
                 bool(p[5] & (1 << PartitionFlags.FLAG_WRITABLE)),
+                bool(p[5] & (1 << PartitionFlags.FLAG_READABLE)),
                 bool(p[5] & (1 << PartitionFlags.FLAG_ERASE_BEFORE_WRITE)),
             )
             for p in self._s.part_get_partitions()
@@ -142,6 +143,22 @@ class Session(object):
                 self._s.part_write(f, _uu.bytes)
         elif isinstance(file, io.BufferedReader):
             self._s.part_write(file, _uu.bytes)
+        else:
+            raise ValueError("Unacceptable input")
+
+    def part_read(self, file: pathlib.Path | io.BufferedReader, part: uuid.UUID | str):
+        """Read data from a partition to a file.
+
+        Keyword arguments:
+            file  -- Path or BufferedReader to write to
+            part  -- UUID of partition to read from
+        """
+        _uu: uuid.UUID = uuid.UUID(part) if isinstance(part, str) else part
+        if isinstance(file, pathlib.Path):
+            with open(file, "wb") as f:
+                self._s.part_read(f, _uu.bytes)
+        elif isinstance(file, io.BufferedReader):
+            self._s.part_read(file, _uu.bytes)
         else:
             raise ValueError("Unacceptable input")
 
