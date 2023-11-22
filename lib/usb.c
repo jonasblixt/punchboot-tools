@@ -96,7 +96,7 @@ static int pb_usb_connect(struct pb_context *ctx)
 
     if (!found_device)
     {
-        rc = -PB_RESULT_ERROR;
+        rc = -PB_RESULT_NOT_FOUND;
         goto err_free_devs_out;
     }
 
@@ -181,6 +181,39 @@ static int pb_usb_write(struct pb_context *ctx, const void *bfr, size_t sz)
     return PB_RESULT_OK;
 }
 
+static int pb_usb_list(struct pb_context *ctx, void (*list_cb)(const char *uuid_str, void *priv), void *list_cb_priv)
+{
+    int rc = PB_RESULT_OK;
+    int i = 0;
+    unsigned char device_serial[128];
+    struct pb_usb_private *priv = PB_USB_PRIVATE(ctx);
+    struct libusb_device_descriptor desc;
+    libusb_device *dev;
+    libusb_device **devs;
+
+    if (libusb_get_device_list(NULL, &devs) < 0)
+        return -PB_RESULT_ERROR;
+
+    while ((dev = devs[i++]) != NULL) {
+        rc = libusb_get_device_descriptor(dev, &desc);
+
+        if (rc < 0)
+            continue;
+
+        if ((desc.idVendor == PB_USB_VID) && (desc.idProduct == PB_USB_PID)) {
+            libusb_open(dev, &priv->h);
+            libusb_get_string_descriptor_ascii(priv->h, desc.iSerialNumber,
+                     device_serial, sizeof(device_serial));
+
+            pb_usb_close_handle(priv);
+
+            list_cb((const char *) device_serial, list_cb_priv);
+        }
+    }
+
+    return 0;
+}
+
 PB_EXPORT int pb_usb_transport_init(struct pb_context *ctx, const char *device_uuid)
 {
     ctx->transport = malloc(sizeof(struct pb_usb_private));
@@ -196,6 +229,7 @@ PB_EXPORT int pb_usb_transport_init(struct pb_context *ctx, const char *device_u
     ctx->init = pb_usb_init;
     ctx->read = pb_usb_read;
     ctx->write = pb_usb_write;
+    ctx->list = pb_usb_list;
     ctx->connect = pb_usb_connect;
 
     return ctx->init(ctx);

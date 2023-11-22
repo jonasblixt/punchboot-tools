@@ -17,7 +17,7 @@ typedef int (*pb_write_t) (struct pb_context *ctx, const void *bfr,
 
 typedef int (*pb_read_t) (struct pb_context *ctx, void *bfr, size_t sz);
 
-typedef int (*pb_list_devices_t) (struct pb_context *ctx);
+typedef int (*pb_list_devices_t) (struct pb_context *ctx, void (*list_cb)(const char *uuid_str, void *priv), void *priv);
 
 typedef int (*pb_connect_t) (struct pb_context *ctx);
 typedef int (*pb_disconnect_t) (struct pb_context *ctx);
@@ -65,6 +65,7 @@ struct pb_partition_table_entry
 
 int pb_api_create_context(struct pb_context **ctx, pb_debug_t debug);
 int pb_api_free_context(struct pb_context *ctx);
+int pb_api_list_devices(struct pb_context *ctx, void (*list_cb)(const char *uuid_str, void *priv), void *priv);
 
 int pb_api_device_reset(struct pb_context *ctx);
 

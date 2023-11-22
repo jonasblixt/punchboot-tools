@@ -46,6 +46,14 @@ PB_EXPORT int pb_api_free_context(struct pb_context *ctx)
     return PB_RESULT_OK;
 }
 
+PB_EXPORT int pb_api_list_devices(struct pb_context *ctx, void (*list_cb)(const char *uuid_str, void *priv), void *priv)
+{
+    ctx->d(ctx, 2, "%s: list\n", __func__);
+    if (ctx->list)
+        return ctx->list(ctx, list_cb, priv);
+    return -PB_RESULT_NOT_SUPPORTED;
+}
+
 PB_EXPORT const char * pb_api_version(void)
 {
     return PB_TOOLS_VERSION_STRING;
