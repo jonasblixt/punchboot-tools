@@ -60,9 +60,7 @@ void help_part(void)
     printf("    -i, --install [--variant <n>] --part <uuid> Install a partition table\n");
     printf("    -s, --show [--part <uuid>]                  Show BPAK information\n");
     printf("    -D, --dump <filename> --part <uuid>         Dump partition to file\n");
-    printf("    -R, --resize <blocks> --part <uuid>         Resize a partition\n");
     printf("    -e, --erase --part <uuid>                   Erase a partition\n");
-    printf("    -F, --force                                 Force operation without confirmation\n");
     help_common_footer();
 }
 

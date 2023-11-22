@@ -132,9 +132,6 @@ int pb_api_partition_write(struct pb_context *ctx,
                              int file_fd,
                              uint8_t *uuid);
 
-int pb_api_partition_resize(struct pb_context *ctx, uint8_t *uuid,
-                                size_t blocks);
-
 int pb_api_stream_init(struct pb_context *ctx, uint8_t *uuid);
 
 int pb_api_stream_prepare_buffer(struct pb_context *ctx,

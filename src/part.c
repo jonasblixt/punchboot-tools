@@ -432,18 +432,6 @@ err_close_fp:
     return rc;
 }
 
-static int part_resize(struct pb_context *ctx,
-                       const char *part_uuid,
-                       size_t blocks_count)
-{
-    uuid_t uu_part;
-    if (uuid_parse(part_uuid, uu_part) != 0) {
-        fprintf(stderr, "Error: Invalid UUID\n");
-        return -PB_RESULT_INVALID_ARGUMENT;
-    }
-    return pb_api_partition_resize(ctx, uu_part, blocks_count);
-}
-
 int action_part(int argc, char **argv)
 {
     int opt;
@@ -459,10 +447,7 @@ int action_part(int argc, char **argv)
     bool flag_erase = false;
     bool flag_show = false;
     bool flag_dump = false;
-    bool flag_resize = false;
-    bool flag_force = false;
     int install_variant = 0;
-    size_t resize_blocks = 0;
     const char *part_uuid = NULL;
     uuid_t part_uu;
     const char *filename = NULL;
@@ -482,12 +467,11 @@ int action_part(int argc, char **argv)
         {"variant",     required_argument, 0,  'I' },
         {"list",        no_argument,       0,  'l' },
         {"dump",        required_argument, 0,  'D' },
-        {"resize",      required_argument, 0,  'R' },
         {"force",       no_argument,       0,  'F' },
         {0,             0,                 0,   0  }
     };
 
-    while ((opt = getopt_long(argc, argv, "hvt:w:silp:c:d:D:R:FI:e",
+    while ((opt = getopt_long(argc, argv, "hvt:w:silp:c:d:D:I:e",
                    long_options, &long_index )) != -1)
     {
         switch (opt)
@@ -497,13 +481,6 @@ int action_part(int argc, char **argv)
                 return 0;
             case 'v':
                 pb_inc_verbosity();
-            break;
-            case 'R':
-                resize_blocks = strtol(optarg, NULL, 0);
-                flag_resize = true;
-            break;
-            case 'F':
-                flag_force = true;
             break;
             case 't':
                 transport = (const char *) optarg;
@@ -586,7 +563,6 @@ int action_part(int argc, char **argv)
 
     if ((flag_write && !part_uuid) ||
         (flag_dump && !part_uuid)  ||
-        (flag_resize && !part_uuid) ||
         (flag_verify && !part_uuid) ||
         (flag_erase && !part_uuid)) {
         fprintf(stderr, "Error: missing required --part argument\n");
@@ -607,30 +583,8 @@ int action_part(int argc, char **argv)
         rc = part_show(ctx, part_uuid);
     else if (flag_dump)
         rc = part_dump(ctx, filename, part_uuid);
-    else if (flag_resize) {
-        if (!flag_force) {
-            char confirm_input[16];
 
-            printf("\n\nWARNING: This operation changes the partition table only.\n" \
-                "This will cause data corruption on the selected partition AND partitions that follow.\n"
-                "\n\nType 'yes' + <Enter> to proceed: ");
-
-            if (fgets(confirm_input, 5, stdin) != confirm_input) {
-                rc = -PB_RESULT_ERROR;
-                goto err_free_ctx_out;
-            }
-
-            if (strncmp(confirm_input, "yes", 3)  != 0) {
-                printf("Aborted\n");
-                rc = -PB_RESULT_ERROR;
-                goto err_free_ctx_out;
-            }
-        }
-
-        rc = part_resize(ctx, part_uuid, resize_blocks);
-    }
-    if (rc != PB_RESULT_OK)
-    {
+    if (rc != PB_RESULT_OK) {
         fprintf(stderr, "Error: Command failed %i (%s)\n", rc,
                             pb_error_string(rc));
     }
