@@ -1,5 +1,5 @@
 from .session import Session
-from .helpers import library_version, pb_id, wait_for_device
+from .helpers import library_version, pb_id, wait_for_device, list_usb_devices
 from .partition import Partition, PartitionFlags
 from .slc import SLC
 
@@ -51,5 +51,6 @@ __all__ = [
     "library_version",
     "pb_id",
     "wait_for_device",
+    "list_usb_devices",
 ]
 __all__ += _pb_exceptions

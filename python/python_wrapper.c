@@ -735,8 +735,50 @@ static PyObject* wait_for_device(PyObject* self, PyObject* args, PyObject* kwds)
     Py_RETURN_NONE;
 }
 
+static void add_list_entry(const char *device_uuid, void *priv)
+{
+    PyObject *list = (PyObject *) priv;
+    PyList_Append(list, Py_BuildValue("s", device_uuid));
+}
+
+static PyObject* list_usb_devices(PyObject* Py_UNUSED(self), PyObject* Py_UNUSED(args))
+{
+    int rc = 0;
+    PyObject* result = NULL;
+    struct pb_context* local_ctx = NULL;
+
+    rc = pb_api_create_context(&local_ctx, NULL);
+    if (rc != PB_RESULT_OK) {
+        return pb_exception_from_rc(rc);
+    }
+    rc = pb_usb_transport_init(local_ctx, NULL);
+    if (rc != PB_RESULT_OK) {
+        return pb_exception_from_rc(rc);
+    }
+
+    result  = PyList_New(0);
+
+    if (!result) {
+        return PyErr_NoMemory();
+    }
+
+    rc = pb_api_list_devices(local_ctx, add_list_entry, (void *) result);
+
+    if (rc != PB_RESULT_OK) {
+        return pb_exception_from_rc(rc);
+    }
+
+    pb_api_free_context(local_ctx);
+
+    if (rc != PB_RESULT_OK)
+        return pb_exception_from_rc(rc);
+    else
+        return result;
+}
+
 static PyMethodDef Punchboot_methods[] = {
     {"wait_for_device", (PyCFunction)(void(*)(void))wait_for_device, METH_VARARGS | METH_KEYWORDS, "Wait for a device, optional timeout in seconds"},
+    {"list_usb_devices", list_usb_devices, METH_NOARGS, "Find all punchboot USB devices"},
     {"version", version, METH_NOARGS, "Returns the library version"},
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };

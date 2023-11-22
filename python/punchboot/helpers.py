@@ -2,6 +2,8 @@
 
 import _punchboot  # type: ignore
 import semver
+import uuid
+from typing import Iterable
 
 
 def library_version() -> semver.Version:
@@ -296,6 +298,14 @@ def wait_for_device(timeout: int = -1):
     timeout -- Timeout in seconds
     """
     _punchboot.wait_for_device(timeout)
+
+
+def list_usb_devices() -> Iterable[uuid.UUID]:
+    """Find all punchboot USB devices.
+
+    Returns a list of device UUID's
+    """
+    return [uuid.UUID(x) for x in _punchboot.list_usb_devices()]
 
 
 def valid_bpak_magic(data: bytes) -> bool:
