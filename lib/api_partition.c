@@ -1,5 +1,7 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <pb-tools/pb-tools.h>
 #include <pb-tools/api.h>
 #include <pb-tools/wire.h>
@@ -398,5 +400,101 @@ PB_EXPORT int pb_api_partition_write(struct pb_context *ctx,
 err_free_buf:
     pb_api_stream_finalize(ctx);
     free(chunk_buffer);
+    return rc;
+}
+
+PB_EXPORT int pb_api_partition_read(struct pb_context *ctx, int file_fd, uint8_t *uuid)
+{
+    struct pb_device_capabilities caps;
+    struct pb_partition_table_entry *tbl;
+    size_t chunk_size;
+    size_t offset = 0;
+    int buffer_id = 0;
+    unsigned char* buffer;
+    int entries = 128;
+    bool part_found = false;
+    size_t bytes_left;
+    int rc = -PB_RESULT_ERROR;
+
+    if (!uuid) {
+        return -PB_RESULT_INVALID_ARGUMENT;
+    }
+
+    lseek(file_fd, 0, SEEK_SET);
+
+    /* Read device capabilities */
+    rc = pb_api_device_read_caps(ctx, &caps);
+
+    if (rc != PB_RESULT_OK)
+        return rc;
+
+    chunk_size = caps.chunk_transfer_max_bytes;
+
+    buffer = malloc(chunk_size);
+    if (!buffer) {
+        return -PB_RESULT_NO_MEMORY;
+    }
+
+    tbl = malloc(sizeof(struct pb_partition_table_entry) * entries);
+    if (!tbl) {
+        rc = -PB_RESULT_NO_MEMORY;
+        goto err_free_buf;
+    }
+
+    rc = pb_api_partition_read_table(ctx, tbl, &entries);
+
+    if (rc != PB_RESULT_OK)
+        goto err_free_tbl;
+
+    if (!entries)
+        goto err_free_tbl;
+
+    for (int i = 0; i < entries; i++) {
+        if (memcmp(uuid, tbl[i].uuid, 16) == 0) {
+            part_found = true;
+            bytes_left = tbl[i].block_size * (tbl[i].last_block - tbl[i].first_block + 1);
+            break;
+        }
+    }
+
+    if (!part_found) {
+        rc = -PB_RESULT_NOT_FOUND;
+        goto err_free_tbl;
+    }
+
+    rc = pb_api_stream_init(ctx, uuid);
+
+    if (rc != PB_RESULT_OK) {
+        fprintf(stderr, "Error: Stream initialization failed (%i)\n", rc);
+        goto err_free_tbl;
+    }
+
+    do {
+        size_t to_read = bytes_left > chunk_size ? chunk_size : bytes_left;
+        rc = pb_api_stream_read_buffer(ctx, buffer_id, offset, to_read, buffer);
+
+        if (rc != PB_RESULT_OK)
+            break;
+
+        buffer_id = (buffer_id + 1) % caps.stream_no_of_buffers;
+
+        ssize_t bytes_written = write(file_fd, buffer, to_read);
+
+        if (bytes_written != (ssize_t) to_read) {
+             rc = -PB_RESULT_IO_ERROR;
+             fprintf(stderr, "Error: Write failed (%i)\n", -errno);
+             break;
+        }
+
+        offset += to_read;
+        bytes_left -= to_read;
+    } while (bytes_left > 0);
+
+    pb_api_stream_finalize(ctx);
+
+err_free_tbl:
+    free(tbl);
+err_free_buf:
+    free(buffer);
     return rc;
 }

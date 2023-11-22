@@ -56,10 +56,10 @@ void help_part(void)
     printf("part options:\n");
     printf("    -l, --list                                  List partitions\n");
     printf("    -w, --write <filename> --part <uuid>        Write data to partition\n");
+    printf("    -r, --read <filename> --part <uuid>         Read partition to file\n");
     printf("    -c, --verify <filename> --part <uuid>       Verify data\n");
     printf("    -i, --install [--variant <n>] --part <uuid> Install a partition table\n");
     printf("    -s, --show [--part <uuid>]                  Show BPAK information\n");
-    printf("    -D, --dump <filename> --part <uuid>         Dump partition to file\n");
     printf("    -e, --erase --part <uuid>                   Erase a partition\n");
     help_common_footer();
 }

@@ -133,6 +133,38 @@ static int part_write(struct pb_context *ctx, const char *filename, const char *
     return rc;
 }
 
+static int part_read(struct pb_context *ctx, const char* filename, const char* part_uuid)
+{
+    int rc;
+    int fd;
+    uuid_t uu_part;
+
+    if (uuid_parse(part_uuid, uu_part) != 0) {
+        fprintf(stderr, "Error: Invalid UUID\n");
+        return -PB_RESULT_INVALID_ARGUMENT;
+    }
+
+    fd = open(filename, O_RDWR | O_CREAT, 0666);
+
+    if (fd < 0) {
+        fprintf(stderr, "Error: Could not open '%s'\n", filename);
+        return -PB_RESULT_NOT_FOUND;
+    }
+
+    if (pb_get_verbosity() > 0) {
+        printf("Reading from partition '%s' to '%s'\n", part_uuid, filename);
+    }
+
+    rc = pb_api_partition_read(ctx, fd, uu_part);
+
+    if (rc != 0) {
+        unlink(filename);
+    }
+
+    close(fd);
+    return rc;
+}
+
 static int part_list(struct pb_context *ctx)
 {
     struct pb_partition_table_entry *tbl;
@@ -192,6 +224,10 @@ static int part_list(struct pb_context *ctx)
         else
             flags_str[3] = '-';
 
+        if (flags & PB_PART_FLAG_READABLE)
+            flags_str[4] = 'R';
+        else
+            flags_str[4] = '-';
         printf("%-37s   %-8s   %-7s   %-16s\n", uuid_str, flags_str, size_str,
                                         tbl[i].description);
     }
@@ -305,133 +341,6 @@ err_out:
     return rc;
 }
 
-static int part_dump(struct pb_context *ctx, const char* filename, const char* part_uuid)
-{
-    struct pb_device_capabilities caps;
-    struct pb_partition_table_entry *tbl;
-    uuid_t uu_part;
-    int partition_table_index = -1;
-    size_t chunk_size;
-    size_t offset = 0;
-    int buffer_id = 0;
-    unsigned char* buffer;
-    int entries = 128;
-    int rc = -PB_RESULT_ERROR;
-    char uuid_str[37];
-    FILE* fp;
-    bool part_is_bpak = false;
-
-    if (part_uuid == 0) {
-        return -PB_RESULT_INVALID_ARGUMENT;
-    }
-
-    fp = fopen(filename, "wb");
-
-    if (!fp) {
-        fprintf(stderr, "Error: Could not open '%s'\n", filename);
-        return -PB_RESULT_ERROR;
-    }
-
-    /* Read device capabilities */
-    rc = pb_api_device_read_caps(ctx, &caps);
-
-    if (rc != PB_RESULT_OK)
-        goto err_close_fp;
-
-    if (uuid_parse(part_uuid, uu_part) != 0) {
-        fprintf(stderr, "Error: Invalid UUID\n");
-        rc = -PB_RESULT_INVALID_ARGUMENT;
-        goto err_close_fp;
-    }
-    chunk_size = caps.chunk_transfer_max_bytes;
-
-    buffer = malloc(chunk_size);
-    if (!buffer) {
-        rc = -PB_RESULT_NO_MEMORY;
-        goto err_close_fp;
-    }
-
-    tbl = malloc(sizeof(struct pb_partition_table_entry) * entries);
-    if (!tbl) {
-        rc = -PB_RESULT_NO_MEMORY;
-        goto err_free_buf;
-    }
-
-    rc = pb_api_partition_read_table(ctx, tbl, &entries);
-
-    if (rc != PB_RESULT_OK)
-        goto err_free_tbl;
-
-    if (!entries)
-        goto err_free_tbl;
-
-    for (int i = 0; i < entries; i++) {
-        struct bpak_header header;
-        uuid_unparse(tbl[i].uuid, uuid_str);
-
-        if (strcmp(uuid_str, part_uuid) != 0)
-            continue;
-
-        rc = pb_api_partition_read_bpak(ctx, tbl[i].uuid, &header);
-
-        if (rc == PB_RESULT_OK)
-            part_is_bpak = true;
-        else if (rc != -PB_RESULT_NOT_FOUND)
-            goto err_free_tbl;
-
-        partition_table_index = i;
-
-        break;
-    }
-
-    rc = pb_api_stream_init(ctx, uu_part);
-
-    if (rc != PB_RESULT_OK)
-    {
-        fprintf(stderr, "Error: Stream initialization failed (%i)\n", rc);
-        goto err_free_tbl;
-    }
-
-    if (part_is_bpak) // TODO: Actual BPAK header extraction
-    {
-    }
-
-    size_t bytes_left = tbl[partition_table_index].block_size * \
-                                (tbl[partition_table_index].last_block - \
-                                tbl[partition_table_index].first_block + 1);
-
-    do
-    {
-        size_t to_read = bytes_left > chunk_size ? chunk_size : bytes_left;
-        rc = pb_api_stream_read_buffer(ctx, buffer_id, offset,
-                                       to_read, buffer);
-
-        if (rc != PB_RESULT_OK)
-            break;
-
-        buffer_id = (buffer_id + 1) % caps.stream_no_of_buffers;
-
-        if (fwrite(buffer, 1, to_read, fp) != to_read)
-        {
-             rc = -PB_RESULT_ERROR;
-             fprintf(stderr, "Error: Write failed\n");
-             break;
-        }
-        offset += to_read;
-        bytes_left -= to_read;
-    } while (bytes_left > 0);
-
-    pb_api_stream_finalize(ctx);
-
-err_free_tbl:
-    free(tbl);
-err_free_buf:
-    free(buffer);
-err_close_fp:
-    fclose(fp);
-    return rc;
-}
-
 int action_part(int argc, char **argv)
 {
     int opt;
@@ -446,7 +355,7 @@ int action_part(int argc, char **argv)
     bool flag_verify = false;
     bool flag_erase = false;
     bool flag_show = false;
-    bool flag_dump = false;
+    bool flag_read = false;
     int install_variant = 0;
     const char *part_uuid = NULL;
     uuid_t part_uu;
@@ -466,12 +375,12 @@ int action_part(int argc, char **argv)
         {"install",     no_argument,       0,  'i' },
         {"variant",     required_argument, 0,  'I' },
         {"list",        no_argument,       0,  'l' },
-        {"dump",        required_argument, 0,  'D' },
+        {"read",        required_argument, 0,  'r' },
         {"force",       no_argument,       0,  'F' },
         {0,             0,                 0,   0  }
     };
 
-    while ((opt = getopt_long(argc, argv, "hvt:w:silp:c:d:D:I:e",
+    while ((opt = getopt_long(argc, argv, "hvt:w:silp:c:d:r:I:e",
                    long_options, &long_index )) != -1)
     {
         switch (opt)
@@ -506,8 +415,8 @@ int action_part(int argc, char **argv)
             case 'e':
                 flag_erase = true;
             break;
-            case 'D':
-                flag_dump = true;
+            case 'r':
+                flag_read = true;
                 filename = (const char *) optarg;
             break;
             case 'p':
@@ -562,7 +471,7 @@ int action_part(int argc, char **argv)
     }
 
     if ((flag_write && !part_uuid) ||
-        (flag_dump && !part_uuid)  ||
+        (flag_read && !part_uuid)  ||
         (flag_verify && !part_uuid) ||
         (flag_erase && !part_uuid)) {
         fprintf(stderr, "Error: missing required --part argument\n");
@@ -581,8 +490,8 @@ int action_part(int argc, char **argv)
         rc = pb_api_partition_erase(ctx, part_uu);
     else if (flag_show)
         rc = part_show(ctx, part_uuid);
-    else if (flag_dump)
-        rc = part_dump(ctx, filename, part_uuid);
+    else if (flag_read)
+        rc = part_read(ctx, filename, part_uuid);
 
     if (rc != PB_RESULT_OK) {
         fprintf(stderr, "Error: Command failed %i (%s)\n", rc,

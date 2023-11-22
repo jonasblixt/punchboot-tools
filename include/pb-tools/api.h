@@ -52,6 +52,7 @@ struct pb_device_capabilities
 #define PB_PART_FLAG_OTP      (1 << 1)
 #define PB_PART_FLAG_WRITABLE (1 << 2)
 #define PB_PART_FLAG_ERASE_BEFORE_WRITE (1 << 3)
+#define PB_PART_FLAG_READABLE (1 << 6)
 
 struct pb_partition_table_entry
 {
@@ -131,6 +132,8 @@ int pb_api_partition_erase(struct pb_context *ctx, uint8_t *uuid);
 int pb_api_partition_write(struct pb_context *ctx,
                              int file_fd,
                              uint8_t *uuid);
+
+int pb_api_partition_read(struct pb_context *ctx, int file_fd, uint8_t *uuid);
 
 int pb_api_stream_init(struct pb_context *ctx, uint8_t *uuid);
 
