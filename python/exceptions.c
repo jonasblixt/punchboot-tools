@@ -1,12 +1,11 @@
-#include <Python.h>
-#include <pb-tools/error.h>
 #include "python_wrapper.h"
+#include <pb-tools/error.h>
+#include <Python.h>
 
 static PyObject *pb_exc_base;
 static PyObject *pb_exceptions[PB_RESULT_END];
 
-static const char *pb_exc_names[] =
-{
+static const char *pb_exc_names[] = {
     "OK", /* OK, is not an exception */
     "GenericError",
     "AuthenticationError",
@@ -30,7 +29,7 @@ static const char *pb_exc_names[] =
 _Static_assert(sizeof(pb_exc_names) / sizeof(pb_exc_names[0]) == PB_RESULT_END,
                "Number of exception strings do not match error enum.");
 
-void* pb_exception_from_rc(int err)
+void *pb_exception_from_rc(int err)
 {
     if (err == 0)
         return NULL;
@@ -55,8 +54,7 @@ int pb_exceptions_init(PyObject *mod)
     }
 
     for (int i = 1; i < PB_RESULT_END; i++) {
-        snprintf(exc_name_buf, sizeof(exc_name_buf), "punchboot.%s",
-                               pb_exc_names[i]);
+        snprintf(exc_name_buf, sizeof(exc_name_buf), "punchboot.%s", pb_exc_names[i]);
         pb_exceptions[i] = PyErr_NewException(exc_name_buf, pb_exc_base, NULL);
         if (pb_exceptions[i] == NULL)
             goto err_out;

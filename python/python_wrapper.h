@@ -4,6 +4,6 @@
 #include <Python.h>
 
 int pb_exceptions_init(PyObject *mod);
-void* pb_exception_from_rc(int err);
+void *pb_exception_from_rc(int err);
 
 #endif

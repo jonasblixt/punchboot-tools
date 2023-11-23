@@ -1,9 +1,9 @@
-#include <stdio.h>
 #include <pb-tools/api.h>
 #include <pb-tools/error.h>
+#include <stdio.h>
 
-#include "nala.h"
 #include "common.h"
+#include "nala.h"
 
 TEST(alloc_free_ctx)
 {

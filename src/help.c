@@ -1,6 +1,6 @@
-#include <stdio.h>
-#include <pb-tools/pb-tools.h>
 #include "tool.h"
+#include <pb-tools/pb-tools.h>
+#include <stdio.h>
 
 static int verbosity;
 
@@ -30,7 +30,8 @@ static void help_common_footer(void)
 {
     printf("\n");
     printf("Common options:\n");
-    printf("    -v, --verbose               Verbose output (Can be issued multiple times to increase output)\n");
+    printf("    -v, --verbose               Verbose output (Can be issued multiple times to "
+           "increase output)\n");
     printf("    -h, --help                  Show help\n");
     printf("    -V, --version               Show version\n");
     printf("    -t, --transport             Communication transport (Default: usb)\n");

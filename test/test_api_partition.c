@@ -1,16 +1,16 @@
-#include <string.h>
-#include "nala.h"
 #include "../src/uuid/uuid.h"
+#include "nala.h"
 #include <pb-tools/api.h>
 #include <pb-tools/error.h>
 #include <pb-tools/socket.h>
 #include <pb-tools/wire.h>
+#include <string.h>
 
-#include "test_command_loop.h"
 #include "command.h"
 #include "common.h"
+#include "test_command_loop.h"
 
-static uint8_t tbl_uuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62" \
+static uint8_t tbl_uuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62"
                             "\x01\x4c\xfa\x73\x5c\xe1";
 
 TEST(api_partition)
@@ -42,14 +42,10 @@ TEST(api_partition)
     rc = pb_api_partition_read_table(ctx, tbl, &entries);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
-
-    for (int i = 0; i < entries; i++)
-    {
-        ssize_t bytes = (tbl[i].last_block - tbl[i].first_block) * \
-                            tbl[i].block_size;
+    for (int i = 0; i < entries; i++) {
+        ssize_t bytes = (tbl[i].last_block - tbl[i].first_block) * tbl[i].block_size;
         printf("%s, %li bytes\n", tbl[i].description, bytes);
     }
-
 
     /* Install partition table*/
     rc = pb_api_partition_install_table(ctx, tbl_uuid, 0);
@@ -61,10 +57,8 @@ TEST(api_partition)
     rc = pb_api_partition_read_table(ctx, tbl, &entries);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
-    for (int i = 0; i < entries; i++)
-    {
-        ssize_t bytes = (tbl[i].last_block - tbl[i].first_block) * \
-                            tbl[i].block_size;
+    for (int i = 0; i < entries; i++) {
+        ssize_t bytes = (tbl[i].last_block - tbl[i].first_block) * tbl[i].block_size;
         printf("%s, %li bytes\n", tbl[i].description, bytes);
     }
     /* Stop command loop */
@@ -76,13 +70,12 @@ TEST(api_partition)
     ASSERT_EQ(rc, PB_RESULT_OK);
 }
 
-
 TEST(part_verify)
 {
     int rc;
     struct pb_context *ctx;
-    unsigned char partuuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62" \
-                                "\x01\x4c\xfa\x73\x5c\xe0";
+    unsigned char partuuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62"
+                               "\x01\x4c\xfa\x73\x5c\xe0";
     uint8_t sha256[] = "hejhopp123";
 
     test_command_loop_set_authenticated(true);
@@ -118,13 +111,12 @@ TEST(part_verify)
     ASSERT_EQ(rc, PB_RESULT_OK);
 }
 
-
 TEST(part_verify_fail)
 {
     int rc;
     struct pb_context *ctx;
-    unsigned char partuuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62" \
-                                "\x01\x4c\xfa\x73\x5c\xe0";
+    unsigned char partuuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62"
+                               "\x01\x4c\xfa\x73\x5c\xe0";
     uint8_t sha256[] = "hejhopp124";
 
     test_command_loop_set_authenticated(true);
@@ -164,8 +156,8 @@ TEST(part_verify_invalid_part)
 {
     int rc;
     struct pb_context *ctx;
-    unsigned char partuuid[] = "\xff\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62" \
-                                "\x01\x4c\xfa\x73\x5c\xe0";
+    unsigned char partuuid[] = "\xff\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62"
+                               "\x01\x4c\xfa\x73\x5c\xe0";
     uint8_t sha256[] = "hejhopp123";
 
     test_command_loop_set_authenticated(true);
@@ -201,15 +193,13 @@ TEST(part_verify_invalid_part)
     ASSERT_EQ(rc, PB_RESULT_OK);
 }
 
-
-
 TEST(read_bpak)
 {
     int rc;
     struct pb_context *ctx;
     struct bpak_header b;
-    unsigned char partuuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62" \
-                                "\x01\x4c\xfa\x73\x5c\xe1";
+    unsigned char partuuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62"
+                               "\x01\x4c\xfa\x73\x5c\xe1";
 
     test_command_loop_set_authenticated(true);
 
@@ -246,4 +236,3 @@ TEST(read_bpak)
     rc = pb_api_free_context(ctx);
     ASSERT_EQ(rc, PB_RESULT_OK);
 }
-

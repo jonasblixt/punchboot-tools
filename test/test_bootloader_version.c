@@ -1,14 +1,14 @@
-#include <string.h>
-#include "nala.h"
 #include "../src/uuid/uuid.h"
+#include "nala.h"
 #include <pb-tools/api.h>
-#include <pb-tools/wire.h>
 #include <pb-tools/error.h>
 #include <pb-tools/socket.h>
+#include <pb-tools/wire.h>
+#include <string.h>
 
-#include "test_command_loop.h"
 #include "command.h"
 #include "common.h"
+#include "test_command_loop.h"
 
 TEST(api_bootloader_version)
 {

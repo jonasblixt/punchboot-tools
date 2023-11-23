@@ -1,19 +1,18 @@
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <pb-tools/api.h>
-#include <pb-tools/wire.h>
-#include <pb-tools/usb.h>
-#include <pb-tools/socket.h>
 #include "tool.h"
+#include <pb-tools/api.h>
+#include <pb-tools/socket.h>
+#include <pb-tools/usb.h>
+#include <pb-tools/wire.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
 
 int pb_debug(struct pb_context *ctx, int level, const char *fmt, ...)
 {
-    (void) ctx;
+    (void)ctx;
     va_list args;
 
-    if (pb_get_verbosity() >= level)
-    {
+    if (pb_get_verbosity() >= level) {
         va_start(args, fmt);
 
         if (level == 0)
@@ -26,14 +25,15 @@ int pb_debug(struct pb_context *ctx, int level, const char *fmt, ...)
     return PB_RESULT_OK;
 }
 
-int transport_init_helper(struct pb_context **ctxp, const char *transport_name,
-                            const char *device_uuid)
+int transport_init_helper(struct pb_context **ctxp,
+                          const char *transport_name,
+                          const char *device_uuid)
 {
     int rc;
-    char *t = (char *) transport_name;
+    char *t = (char *)transport_name;
 
     if (!t)
-        t = (char *) "usb";
+        t = (char *)"usb";
 
     if (pb_get_verbosity() > 2)
         printf("Initializing transport: %s\n", t);
@@ -45,12 +45,9 @@ int transport_init_helper(struct pb_context **ctxp, const char *transport_name,
         return rc;
     *ctxp = ctx;
 
-    if (strcmp(t, "usb") == 0)
-    {
+    if (strcmp(t, "usb") == 0) {
         rc = pb_usb_transport_init(ctx, device_uuid);
-    }
-    else if (strcmp(t, "socket") == 0)
-    {
+    } else if (strcmp(t, "socket") == 0) {
 #if PB_TOOLS_BUILD_SOCKET == 1
         if (pb_get_verbosity() > 2)
             printf("Connecting to /tmp/pb.sock\n");
@@ -69,8 +66,8 @@ int transport_init_helper(struct pb_context **ctxp, const char *transport_name,
 
 int bytes_to_string(size_t bytes, char *out, size_t size)
 {
-    if (bytes > 1024*1024)
-        snprintf(out, size, "%-4zu MB", bytes / (1024*1024));
+    if (bytes > 1024 * 1024)
+        snprintf(out, size, "%-4zu MB", bytes / (1024 * 1024));
     else if (bytes > 1024)
         snprintf(out, size, "%-4zu kB", bytes / 1024);
     else

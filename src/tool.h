@@ -25,9 +25,10 @@ int action_slc(int argc, char **argv);
 int action_auth(int argc, char **argv);
 int action_board(int argc, char **argv);
 
-int transport_init_helper(struct pb_context **ctxp, const char *transport_name,
-                            const char *device_uuid);
+int transport_init_helper(struct pb_context **ctxp,
+                          const char *transport_name,
+                          const char *device_uuid);
 int pb_debug(struct pb_context *ctx, int level, const char *fmt, ...);
 int bytes_to_string(size_t bytes, char *out, size_t size);
 
-#endif  // TOOL_H_
+#endif // TOOL_H_

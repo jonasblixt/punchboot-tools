@@ -1,12 +1,12 @@
-#include "nala.h"
 #include "../src/uuid/uuid.h"
+#include "nala.h"
 #include <pb-tools/api.h>
 #include <pb-tools/error.h>
 #include <pb-tools/socket.h>
 
-#include "test_command_loop.h"
 #include "command.h"
 #include "common.h"
+#include "test_command_loop.h"
 
 TEST(api_init)
 {
@@ -34,7 +34,6 @@ TEST(api_reset)
     /* Start command loop */
     rc = test_command_loop_start(NULL);
     ASSERT_EQ(rc, PB_RESULT_OK);
-
 
     /* Create command context and connect */
     rc = pb_api_create_context(&ctx, pb_test_debug);
@@ -71,7 +70,6 @@ TEST(api_unsupported_function)
     rc = test_command_loop_start(&command_ctx);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
-
     rc = pb_command_configure(command_ctx, PB_CMD_DEVICE_RESET, NULL);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
@@ -98,7 +96,6 @@ TEST(api_unsupported_function)
     ASSERT_EQ(rc, PB_RESULT_OK);
 }
 
-
 TEST(api_read_device_uuid)
 {
     int rc;
@@ -124,8 +121,8 @@ TEST(api_read_device_uuid)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Send command */
-    rc = pb_api_device_read_identifier(ctx, device_uuid_raw, sizeof(device_uuid_raw),
-                                            board_id, sizeof(board_id));
+    rc = pb_api_device_read_identifier(
+        ctx, device_uuid_raw, sizeof(device_uuid_raw), board_id, sizeof(board_id));
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     uuid_unparse(device_uuid_raw, uuid_tmp);
@@ -158,7 +155,6 @@ TEST(api_read_caps)
     rc = test_command_loop_start(NULL);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
-
     /* Create command context and connect */
     rc = pb_api_create_context(&ctx, pb_test_debug);
     ASSERT_EQ(rc, PB_RESULT_OK);
@@ -177,7 +173,7 @@ TEST(api_read_caps)
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(caps.stream_no_of_buffers, 2);
-    ASSERT_EQ(caps.stream_buffer_size, 1024*1024*4);
+    ASSERT_EQ(caps.stream_buffer_size, 1024 * 1024 * 4);
     ASSERT_EQ(caps.operation_timeout_ms, 1000);
     ASSERT_EQ(caps.part_erase_timeout_ms, 30000);
 

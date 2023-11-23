@@ -1,8 +1,8 @@
-#include <stdio.h>
-#include <stdint.h>
-#include <string.h>
-#include <pb-tools/wire.h>
 #include <pb-tools/error.h>
+#include <pb-tools/wire.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "command.h"
 
@@ -49,28 +49,24 @@ int pb_command_process(struct pb_command_ctx *ctx, struct pb_command *command)
     pb_wire_init_result(&result, PB_RESULT_ERROR);
 
     /* Check for invalid commands */
-    if (!pb_wire_valid_command(command))
-    {
-        printf("Error: Invalid command %i [%x]\n", command->command,
-                                                   command->magic);
+    if (!pb_wire_valid_command(command)) {
+        printf("Error: Invalid command %i [%x]\n", command->command, command->magic);
         pb_wire_init_result(&result, -PB_RESULT_INVALID_COMMAND);
         goto command_error_out;
     }
 
     /* Check if command requires authentication */
-    //if (pb_slc_get() == PB_SLC_CONFIGURATION_LOCKED)
+    // if (pb_slc_get() == PB_SLC_CONFIGURATION_LOCKED)
     //{
-        if (pb_wire_requires_auth(command) && (!ctx->authenticated))
-        {
-            pb_wire_init_result(&result, -PB_RESULT_NOT_AUTHENTICATED);
-            goto command_error_out;
-        }
+    if (pb_wire_requires_auth(command) && (!ctx->authenticated)) {
+        pb_wire_init_result(&result, -PB_RESULT_NOT_AUTHENTICATED);
+        goto command_error_out;
+    }
     //}
 
     cmd = ctx->commands[command->command];
 
-    if (!cmd)
-    {
+    if (!cmd) {
         printf("Error: Not supported\n");
         rc = -PB_RESULT_ERROR;
         pb_wire_init_result(&result, -PB_RESULT_NOT_SUPPORTED);

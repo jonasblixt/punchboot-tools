@@ -1,14 +1,14 @@
-#include <string.h>
-#include "nala.h"
 #include "../src/uuid/uuid.h"
+#include "nala.h"
 #include <pb-tools/api.h>
-#include <pb-tools/wire.h>
 #include <pb-tools/error.h>
 #include <pb-tools/socket.h>
+#include <pb-tools/wire.h>
+#include <string.h>
 
-#include "test_command_loop.h"
 #include "command.h"
 #include "common.h"
+#include "test_command_loop.h"
 
 TEST(api_slc1)
 {
@@ -34,11 +34,8 @@ TEST(api_slc1)
     rc = ctx->connect(ctx);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
-
     /* Read security life cycle */
-    rc = pb_api_slc_read(ctx, &slc,
-                            (uint8_t *) active_keys,
-                            (uint8_t *) revoked_keys);
+    rc = pb_api_slc_read(ctx, &slc, (uint8_t *)active_keys, (uint8_t *)revoked_keys);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(slc, PB_SLC_NOT_CONFIGURED);
@@ -46,9 +43,7 @@ TEST(api_slc1)
     printf("slc: %s\n", pb_wire_slc_string(slc));
 
     /* Read security life cycle */
-    rc = pb_api_slc_read(ctx, &slc,
-                            (uint8_t *) active_keys,
-                            (uint8_t *) revoked_keys);
+    rc = pb_api_slc_read(ctx, &slc, (uint8_t *)active_keys, (uint8_t *)revoked_keys);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(slc, PB_SLC_NOT_CONFIGURED);
@@ -87,15 +82,12 @@ TEST(api_slc_configuration)
     rc = ctx->connect(ctx);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
-
     /* Perform device configuration */
     rc = pb_api_slc_set_configuration(ctx);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Read security life cycle */
-    rc = pb_api_slc_read(ctx, &slc,
-                                (uint8_t *) active_keys,
-                                (uint8_t *) revoked_keys);
+    rc = pb_api_slc_read(ctx, &slc, (uint8_t *)active_keys, (uint8_t *)revoked_keys);
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(slc, PB_SLC_CONFIGURATION);
 
@@ -106,9 +98,7 @@ TEST(api_slc_configuration)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Read security life cycle */
-    rc = pb_api_slc_read(ctx, &slc,
-                                (uint8_t *) active_keys,
-                                (uint8_t *) revoked_keys);
+    rc = pb_api_slc_read(ctx, &slc, (uint8_t *)active_keys, (uint8_t *)revoked_keys);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(slc, PB_SLC_CONFIGURATION);
@@ -122,7 +112,6 @@ TEST(api_slc_configuration)
     rc = pb_api_free_context(ctx);
     ASSERT_EQ(rc, PB_RESULT_OK);
 }
-
 
 TEST(api_slc_configuration_lock)
 {
@@ -152,9 +141,7 @@ TEST(api_slc_configuration_lock)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Read security life cycle */
-    rc = pb_api_slc_read(ctx, &slc,
-                                (uint8_t *) active_keys,
-                                (uint8_t *) revoked_keys);
+    rc = pb_api_slc_read(ctx, &slc, (uint8_t *)active_keys, (uint8_t *)revoked_keys);
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(slc, PB_SLC_CONFIGURATION);
 
@@ -163,9 +150,7 @@ TEST(api_slc_configuration_lock)
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Read security life cycle */
-    rc = pb_api_slc_read(ctx, &slc,
-                                (uint8_t *) active_keys,
-                                (uint8_t *) revoked_keys);
+    rc = pb_api_slc_read(ctx, &slc, (uint8_t *)active_keys, (uint8_t *)revoked_keys);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(slc, PB_SLC_CONFIGURATION_LOCKED);
@@ -177,9 +162,7 @@ TEST(api_slc_configuration_lock)
     ASSERT_EQ(rc, -PB_RESULT_ERROR);
 
     /* Read security life cycle */
-    rc = pb_api_slc_read(ctx, &slc,
-                                (uint8_t *) active_keys,
-                                (uint8_t *) revoked_keys);
+    rc = pb_api_slc_read(ctx, &slc, (uint8_t *)active_keys, (uint8_t *)revoked_keys);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(slc, PB_SLC_CONFIGURATION_LOCKED);
@@ -190,9 +173,7 @@ TEST(api_slc_configuration_lock)
     ASSERT_EQ(rc, -PB_RESULT_ERROR);
 
     /* Read security life cycle */
-    rc = pb_api_slc_read(ctx, &slc,
-                                (uint8_t *) active_keys,
-                                (uint8_t *) revoked_keys);
+    rc = pb_api_slc_read(ctx, &slc, (uint8_t *)active_keys, (uint8_t *)revoked_keys);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(slc, PB_SLC_CONFIGURATION_LOCKED);
@@ -234,9 +215,7 @@ TEST(api_slc_revoke_key)
     memset(revoked_keys, 0, sizeof(revoked_keys));
 
     /* Read security life cycle */
-    rc = pb_api_slc_read(ctx, &slc,
-                                (uint8_t *) active_keys,
-                                (uint8_t *) revoked_keys);
+    rc = pb_api_slc_read(ctx, &slc, (uint8_t *)active_keys, (uint8_t *)revoked_keys);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(slc, PB_SLC_NOT_CONFIGURED);
@@ -251,16 +230,13 @@ TEST(api_slc_revoke_key)
     ASSERT_EQ(revoked_keys[0], 0x01010101);
     ASSERT_EQ(revoked_keys[1], 0x00000000);
 
-
     /* Revoke key 0x02020202 */
 
     rc = pb_api_slc_revoke_key(ctx, 0x02020202);
     ASSERT_EQ(rc, PB_RESULT_OK);
 
     /* Read security life cycle */
-    rc = pb_api_slc_read(ctx, &slc,
-                                (uint8_t *) active_keys,
-                                (uint8_t *) revoked_keys);
+    rc = pb_api_slc_read(ctx, &slc, (uint8_t *)active_keys, (uint8_t *)revoked_keys);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(slc, PB_SLC_NOT_CONFIGURED);
@@ -313,9 +289,7 @@ TEST(api_slc_revoke_key_twice)
     memset(revoked_keys, 0, sizeof(revoked_keys));
 
     /* Read security life cycle */
-    rc = pb_api_slc_read(ctx, &slc,
-                                (uint8_t *) active_keys,
-                                (uint8_t *) revoked_keys);
+    rc = pb_api_slc_read(ctx, &slc, (uint8_t *)active_keys, (uint8_t *)revoked_keys);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(slc, PB_SLC_NOT_CONFIGURED);
@@ -329,7 +303,6 @@ TEST(api_slc_revoke_key_twice)
 
     ASSERT_EQ(revoked_keys[0], 0x01010101);
     ASSERT_EQ(revoked_keys[1], 0x00000000);
-
 
     /* Revoke key 0x02020202 */
 
@@ -347,4 +320,3 @@ TEST(api_slc_revoke_key_twice)
     rc = pb_api_free_context(ctx);
     ASSERT_EQ(rc, PB_RESULT_OK);
 }
-

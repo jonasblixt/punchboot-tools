@@ -1,19 +1,17 @@
+#include <bpak/bpak.h>
+#include <pb-tools/api.h>
+#include <pb-tools/pb-tools.h>
+#include <pb-tools/wire.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pb-tools/pb-tools.h>
-#include <pb-tools/api.h>
-#include <pb-tools/wire.h>
-#include <bpak/bpak.h>
 
-static int pb_api_debug_stub(struct pb_context *ctx, int level,
-                                    const char *fmt, ...)
+static int pb_api_debug_stub(struct pb_context *ctx, int level, const char *fmt, ...)
 {
-    (void) ctx;
-    (void) level;
-    (void) fmt;
+    (void)ctx;
+    (void)level;
+    (void)fmt;
     return PB_RESULT_OK;
 }
-
 
 PB_EXPORT int pb_api_create_context(struct pb_context **ctxp, pb_debug_t debug)
 {
@@ -46,7 +44,9 @@ PB_EXPORT int pb_api_free_context(struct pb_context *ctx)
     return PB_RESULT_OK;
 }
 
-PB_EXPORT int pb_api_list_devices(struct pb_context *ctx, void (*list_cb)(const char *uuid_str, void *priv), void *priv)
+PB_EXPORT int pb_api_list_devices(struct pb_context *ctx,
+                                  void (*list_cb)(const char *uuid_str, void *priv),
+                                  void *priv)
 {
     ctx->d(ctx, 2, "%s: list\n", __func__);
     if (ctx->list)
@@ -54,7 +54,7 @@ PB_EXPORT int pb_api_list_devices(struct pb_context *ctx, void (*list_cb)(const 
     return -PB_RESULT_NOT_SUPPORTED;
 }
 
-PB_EXPORT const char * pb_api_version(void)
+PB_EXPORT const char *pb_api_version(void)
 {
     return PB_TOOLS_VERSION_STRING;
 }

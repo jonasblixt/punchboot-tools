@@ -11,13 +11,13 @@ TEST(magic)
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(cmd.magic, PB_WIRE_MAGIC);
-    ASSERT_EQ(cmd.magic, 0x50424c30   /* PBL0 */);
+    ASSERT_EQ(cmd.magic, 0x50424c30 /* PBL0 */);
 
     rc = pb_wire_init_result(&result, PB_RESULT_OK);
 
     ASSERT_EQ(rc, PB_RESULT_OK);
     ASSERT_EQ(result.magic, PB_WIRE_MAGIC);
-    ASSERT_EQ(result.magic, 0x50424c30   /* PBL0 */);
+    ASSERT_EQ(result.magic, 0x50424c30 /* PBL0 */);
 }
 
 TEST(invalid_command)

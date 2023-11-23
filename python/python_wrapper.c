@@ -1,25 +1,25 @@
 /* Python 3.10 and newer must set PY_SSIZE_T_CLEAN when using # variant
  *  when parsing arguments */
 #define PY_SSIZE_T_CLEAN
+#include "python_wrapper.h"
+#include <pb-tools/api.h>
+#include <pb-tools/error.h>
+#include <pb-tools/pb-tools.h>
+#include <pb-tools/usb.h>
+#include <pb-tools/wire.h>
+#include <Python.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <Python.h>
-#include <pb-tools/pb-tools.h>
-#include <pb-tools/api.h>
-#include <pb-tools/error.h>
-#include <pb-tools/usb.h>
-#include <pb-tools/wire.h>
-#include "python_wrapper.h"
 
 #if PY_MAJOR_VERSION < 3
 #error "Only python3 supported"
 #endif
 
-static int init_transport(const char* uuid, struct pb_context** ctx)
+static int init_transport(const char *uuid, struct pb_context **ctx)
 {
     int rc = 0;
-    struct pb_context* local_ctx = NULL;
+    struct pb_context *local_ctx = NULL;
 
     rc = pb_api_create_context(&local_ctx, NULL);
     if (rc != PB_RESULT_OK) {
@@ -42,8 +42,7 @@ err_free_ctx:
 }
 
 struct pb_session {
-    PyObject_HEAD
-    struct pb_context *ctx;
+    PyObject_HEAD struct pb_context *ctx;
 };
 
 static int validate_pb_session(struct pb_session *s)
@@ -55,10 +54,9 @@ static int validate_pb_session(struct pb_session *s)
     return 0;
 }
 
-
 static int PbSession_init(struct pb_session *self, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"uuid", NULL};
+    static char *kwlist[] = { "uuid", NULL };
     char *device_uuid_str = NULL;
     int rc;
 
@@ -66,7 +64,7 @@ static int PbSession_init(struct pb_session *self, PyObject *args, PyObject *kwd
         return -1;
     }
 
-    rc = init_transport((const char *) device_uuid_str, &self->ctx);
+    rc = init_transport((const char *)device_uuid_str, &self->ctx);
     if (rc != PB_RESULT_OK) {
         pb_exception_from_rc(rc);
         return -1;
@@ -80,14 +78,14 @@ static void PbSession_dealloc(struct pb_session *self)
     if (self->ctx) {
         pb_api_free_context(self->ctx);
     }
-    Py_TYPE(self)->tp_free((PyObject*)self);
+    Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
-static PyObject* authenticate(PyObject* self, PyObject* args, PyObject* kwds)
+static PyObject *authenticate(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    struct pb_session* session = (struct pb_session*)self;
-    static char *kwlist[] = {"password", NULL};
-    const char* password;
+    struct pb_session *session = (struct pb_session *)self;
+    static char *kwlist[] = { "password", NULL };
+    const char *password;
     int rc;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &password)) {
@@ -98,23 +96,24 @@ static PyObject* authenticate(PyObject* self, PyObject* args, PyObject* kwds)
         return NULL;
     }
 
-    rc = pb_api_authenticate_password(session->ctx, (uint8_t*)password, strlen(password));
+    rc = pb_api_authenticate_password(session->ctx, (uint8_t *)password, strlen(password));
     if (rc != 0) {
         return pb_exception_from_rc(rc);
     }
     Py_RETURN_NONE;
 }
 
-static PyObject* authenticate_dsa_token(PyObject* self, PyObject* args, PyObject* kwds)
+static PyObject *authenticate_dsa_token(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    struct pb_session* session = (struct pb_session*)self;
-    static char *kwlist[] = {"password", "key_id", NULL};
+    struct pb_session *session = (struct pb_session *)self;
+    static char *kwlist[] = { "password", "key_id", NULL };
     uint8_t *token_data = NULL;
     size_t token_data_length = 0;
     unsigned int key_id = -1;
     int rc;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "y#I", kwlist, &token_data, &token_data_length, &key_id)) {
+    if (!PyArg_ParseTupleAndKeywords(
+            args, kwds, "y#I", kwlist, &token_data, &token_data_length, &key_id)) {
         return NULL;
     }
 
@@ -129,9 +128,9 @@ static PyObject* authenticate_dsa_token(PyObject* self, PyObject* args, PyObject
     Py_RETURN_NONE;
 }
 
-static PyObject* device_reset(PyObject* self, PyObject* Py_UNUSED(args))
+static PyObject *device_reset(PyObject *self, PyObject *Py_UNUSED(args))
 {
-    struct pb_session* session = (struct pb_session*)self;
+    struct pb_session *session = (struct pb_session *)self;
     int rc;
 
     if (validate_pb_session(session) != 0) {
@@ -148,9 +147,9 @@ static PyObject* device_reset(PyObject* self, PyObject* Py_UNUSED(args))
     Py_RETURN_NONE;
 }
 
-static PyObject* device_get_punchboot_version(PyObject* self, PyObject* Py_UNUSED(args))
+static PyObject *device_get_punchboot_version(PyObject *self, PyObject *Py_UNUSED(args))
 {
-    struct pb_session* session = (struct pb_session*)self;
+    struct pb_session *session = (struct pb_session *)self;
     char version[64];
     int rc;
 
@@ -168,15 +167,15 @@ static PyObject* device_get_punchboot_version(PyObject* self, PyObject* Py_UNUSE
     return Py_BuildValue("s", version);
 }
 
-static int get_uuid(struct pb_context* ctx, uint8_t* uuid)
+static int get_uuid(struct pb_context *ctx, uint8_t *uuid)
 {
     uint8_t device_uu[16];
     char board_name[17];
     int rc;
 
     /* Arguments to this API are not optional */
-    rc = pb_api_device_read_identifier(ctx, device_uu, sizeof(device_uu),
-                                           board_name, sizeof(board_name));
+    rc = pb_api_device_read_identifier(
+        ctx, device_uu, sizeof(device_uu), board_name, sizeof(board_name));
     if (rc != PB_RESULT_OK) {
         return rc;
     }
@@ -186,9 +185,9 @@ static int get_uuid(struct pb_context* ctx, uint8_t* uuid)
     return PB_RESULT_OK;
 }
 
-static PyObject* device_get_uuid(PyObject* self, PyObject* Py_UNUSED(args))
+static PyObject *device_get_uuid(PyObject *self, PyObject *Py_UNUSED(args))
 {
-    struct pb_session* session = (struct pb_session*)self;
+    struct pb_session *session = (struct pb_session *)self;
     uint8_t device_uu[16];
     int rc;
 
@@ -205,15 +204,15 @@ static PyObject* device_get_uuid(PyObject* self, PyObject* Py_UNUSED(args))
     return Py_BuildValue("y#", device_uu, 16);
 }
 
-static PyObject* version(PyObject* self, PyObject* Py_UNUSED(args))
+static PyObject *version(PyObject *self, PyObject *Py_UNUSED(args))
 {
-    (void) self;
+    (void)self;
     return Py_BuildValue("s", PB_TOOLS_VERSION_STRING);
 }
 
-static PyObject* device_get_boardname(PyObject* self, PyObject* Py_UNUSED(args))
+static PyObject *device_get_boardname(PyObject *self, PyObject *Py_UNUSED(args))
 {
-    struct pb_session* session = (struct pb_session*)self;
+    struct pb_session *session = (struct pb_session *)self;
     uint8_t device_uu[16];
     char board_name[17];
     int rc = 0;
@@ -225,8 +224,8 @@ static PyObject* device_get_boardname(PyObject* self, PyObject* Py_UNUSED(args))
     }
 
     /* Arguments to this API are not optional */
-    rc = pb_api_device_read_identifier(session->ctx, device_uu, sizeof(device_uu),
-                                           board_name, sizeof(board_name));
+    rc = pb_api_device_read_identifier(
+        session->ctx, device_uu, sizeof(device_uu), board_name, sizeof(board_name));
     if (rc != PB_RESULT_OK) {
         return pb_exception_from_rc(rc);
     }
@@ -234,9 +233,9 @@ static PyObject* device_get_boardname(PyObject* self, PyObject* Py_UNUSED(args))
     return Py_BuildValue("s", board_name);
 }
 
-static PyObject* slc_set_configuration(PyObject* self, PyObject* Py_UNUSED(args))
+static PyObject *slc_set_configuration(PyObject *self, PyObject *Py_UNUSED(args))
 {
-    struct pb_session* session = (struct pb_session*)self;
+    struct pb_session *session = (struct pb_session *)self;
     int rc;
 
     if (validate_pb_session(session) != 0) {
@@ -250,9 +249,9 @@ static PyObject* slc_set_configuration(PyObject* self, PyObject* Py_UNUSED(args)
     Py_RETURN_NONE;
 }
 
-static PyObject* slc_set_configuration_locked(PyObject* self, PyObject* Py_UNUSED(args))
+static PyObject *slc_set_configuration_locked(PyObject *self, PyObject *Py_UNUSED(args))
 {
-    struct pb_session* session = (struct pb_session*)self;
+    struct pb_session *session = (struct pb_session *)self;
     int rc;
 
     if (validate_pb_session(session) != 0) {
@@ -266,10 +265,10 @@ static PyObject* slc_set_configuration_locked(PyObject* self, PyObject* Py_UNUSE
     Py_RETURN_NONE;
 }
 
-static PyObject* slc_revoke_key(PyObject* self, PyObject* args, PyObject* kwds)
+static PyObject *slc_revoke_key(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    struct pb_session* session = (struct pb_session*)self;
-    static char *kwlist[] = {"key_id", NULL};
+    struct pb_session *session = (struct pb_session *)self;
+    static char *kwlist[] = { "key_id", NULL };
     unsigned int key_id;
 
     int rc;
@@ -289,10 +288,9 @@ static PyObject* slc_revoke_key(PyObject* self, PyObject* args, PyObject* kwds)
     Py_RETURN_NONE;
 }
 
-
-static PyObject* slc_get_lifecycle(PyObject* self, PyObject* Py_UNUSED(args))
+static PyObject *slc_get_lifecycle(PyObject *self, PyObject *Py_UNUSED(args))
 {
-    struct pb_session* session = (struct pb_session*)self;
+    struct pb_session *session = (struct pb_session *)self;
     int rc;
 
     uint8_t slc;
@@ -308,9 +306,9 @@ static PyObject* slc_get_lifecycle(PyObject* self, PyObject* Py_UNUSED(args))
     return Py_BuildValue("i", (int)slc);
 }
 
-static PyObject* slc_get_active_keys(PyObject* self, PyObject* Py_UNUSED(args))
+static PyObject *slc_get_active_keys(PyObject *self, PyObject *Py_UNUSED(args))
 {
-    struct pb_session* session = (struct pb_session*)self;
+    struct pb_session *session = (struct pb_session *)self;
     int rc;
 
     /* slc argument is currently not optional to pb_api_slc_read */
@@ -322,7 +320,7 @@ static PyObject* slc_get_active_keys(PyObject* self, PyObject* Py_UNUSED(args))
         return NULL;
     }
 
-    rc = pb_api_slc_read(session->ctx, &slc, (uint8_t *) active_keys, NULL);
+    rc = pb_api_slc_read(session->ctx, &slc, (uint8_t *)active_keys, NULL);
     if (rc != PB_RESULT_OK) {
         return pb_exception_from_rc(rc);
     }
@@ -332,7 +330,7 @@ static PyObject* slc_get_active_keys(PyObject* self, PyObject* Py_UNUSED(args))
     for (key_count = 0; active_keys[key_count] != 0; key_count++) {
         ; /* empty on purpose, we're counting keys */
     }
-    PyObject* keylist = PyList_New(key_count);
+    PyObject *keylist = PyList_New(key_count);
     if (!keylist) {
         return PyErr_NoMemory();
     }
@@ -344,9 +342,9 @@ static PyObject* slc_get_active_keys(PyObject* self, PyObject* Py_UNUSED(args))
     return keylist;
 }
 
-static PyObject* slc_get_revoked_keys(PyObject* self, PyObject* Py_UNUSED(args))
+static PyObject *slc_get_revoked_keys(PyObject *self, PyObject *Py_UNUSED(args))
 {
-    struct pb_session* session = (struct pb_session*)self;
+    struct pb_session *session = (struct pb_session *)self;
     int rc;
 
     /* slc argument is currently not optional to pb_api_slc_read */
@@ -358,7 +356,7 @@ static PyObject* slc_get_revoked_keys(PyObject* self, PyObject* Py_UNUSED(args))
         return NULL;
     }
 
-    rc = pb_api_slc_read(session->ctx, &slc, NULL, (uint8_t *) revoked_keys);
+    rc = pb_api_slc_read(session->ctx, &slc, NULL, (uint8_t *)revoked_keys);
     if (rc != PB_RESULT_OK) {
         return pb_exception_from_rc(rc);
     }
@@ -368,7 +366,7 @@ static PyObject* slc_get_revoked_keys(PyObject* self, PyObject* Py_UNUSED(args))
     for (key_count = 0; revoked_keys[key_count] != 0; key_count++) {
         ; /* empty on purpose, we're counting keys */
     }
-    PyObject* keylist = PyList_New(key_count);
+    PyObject *keylist = PyList_New(key_count);
     if (!keylist) {
         return PyErr_NoMemory();
     }
@@ -380,7 +378,9 @@ static PyObject* slc_get_revoked_keys(PyObject* self, PyObject* Py_UNUSED(args))
     return keylist;
 }
 
-static int read_part_table(struct pb_context* ctx, struct pb_partition_table_entry** table, int* entries)
+static int read_part_table(struct pb_context *ctx,
+                           struct pb_partition_table_entry **table,
+                           int *entries)
 {
     struct pb_partition_table_entry *tbl;
     int read_entries = 128;
@@ -399,7 +399,7 @@ static int read_part_table(struct pb_context* ctx, struct pb_partition_table_ent
 
     if (read_entries == 0) {
         free(tbl);
-        return -PB_RESULT_ERROR;  // TODO: Better error?
+        return -PB_RESULT_ERROR; // TODO: Better error?
     }
 
     *table = tbl;
@@ -407,9 +407,9 @@ static int read_part_table(struct pb_context* ctx, struct pb_partition_table_ent
     return 0;
 }
 
-static PyObject* part_get_partitions(PyObject* self, PyObject* Py_UNUSED(args))
+static PyObject *part_get_partitions(PyObject *self, PyObject *Py_UNUSED(args))
 {
-    struct pb_session* session = (struct pb_session*)self;
+    struct pb_session *session = (struct pb_session *)self;
     PyObject *part_list = NULL;
     int rc = 0;
     int i;
@@ -456,10 +456,10 @@ err_free_tbl_out:
     return NULL;
 }
 
-static PyObject* part_table_install(PyObject* self, PyObject* args, PyObject* kwds)
+static PyObject *part_table_install(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    struct pb_session* session = (struct pb_session*)self;
-    static char *kwlist[] = {"part", "variant", NULL};
+    struct pb_session *session = (struct pb_session *)self;
+    static char *kwlist[] = { "part", "variant", NULL };
     int rc;
     uint8_t *part_uu = NULL;
     size_t part_uu_len = 0;
@@ -480,11 +480,11 @@ static PyObject* part_table_install(PyObject* self, PyObject* args, PyObject* kw
     Py_RETURN_NONE;
 }
 
-static PyObject* part_write(PyObject* self, PyObject* args, PyObject* kwds)
+static PyObject *part_write(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    struct pb_session* session = (struct pb_session*)self;
-    static char *kwlist[] = {"file", "uuid", NULL};
-    PyObject* file = NULL;
+    struct pb_session *session = (struct pb_session *)self;
+    static char *kwlist[] = { "file", "uuid", NULL };
+    PyObject *file = NULL;
     int file_fd = -1;
     uint8_t *part_uu = NULL;
     size_t part_uu_len = 0;
@@ -513,11 +513,11 @@ static PyObject* part_write(PyObject* self, PyObject* args, PyObject* kwds)
     Py_RETURN_NONE;
 }
 
-static PyObject* part_read(PyObject* self, PyObject* args, PyObject* kwds)
+static PyObject *part_read(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    struct pb_session* session = (struct pb_session*)self;
-    static char *kwlist[] = {"file", "uuid", NULL};
-    PyObject* file = NULL;
+    struct pb_session *session = (struct pb_session *)self;
+    static char *kwlist[] = { "file", "uuid", NULL };
+    PyObject *file = NULL;
     int file_fd = -1;
     uint8_t *part_uu = NULL;
     size_t part_uu_len = 0;
@@ -546,10 +546,10 @@ static PyObject* part_read(PyObject* self, PyObject* args, PyObject* kwds)
     Py_RETURN_NONE;
 }
 
-static PyObject* part_erase(PyObject*self, PyObject* args, PyObject *kwds)
+static PyObject *part_erase(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    struct pb_session* session = (struct pb_session*)self;
-    static char *kwlist[] = {"uuid", NULL};
+    struct pb_session *session = (struct pb_session *)self;
+    static char *kwlist[] = { "uuid", NULL };
     uint8_t *part_uu = NULL;
     size_t part_uu_len = 0;
     int rc;
@@ -571,10 +571,10 @@ static PyObject* part_erase(PyObject*self, PyObject* args, PyObject *kwds)
     Py_RETURN_NONE;
 }
 
-static PyObject* part_verify(PyObject*self, PyObject* args, PyObject *kwds)
+static PyObject *part_verify(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    struct pb_session* session = (struct pb_session*)self;
-    static char *kwlist[] = {"uuid", "sha256_digest", "data_length", "bpak", NULL};
+    struct pb_session *session = (struct pb_session *)self;
+    static char *kwlist[] = { "uuid", "sha256_digest", "data_length", "bpak", NULL };
     uint8_t *uu_part;
     size_t uu_part_len = 0;
     uint8_t *sha256_digest = NULL;
@@ -583,9 +583,16 @@ static PyObject* part_verify(PyObject*self, PyObject* args, PyObject *kwds)
     unsigned int data_length = 0;
     int rc;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "y#y#I|p",
-                    kwlist, &uu_part, &uu_part_len,
-                    &sha256_digest, &sha256_digest_len, &data_length, &bpak_file)) {
+    if (!PyArg_ParseTupleAndKeywords(args,
+                                     kwds,
+                                     "y#y#I|p",
+                                     kwlist,
+                                     &uu_part,
+                                     &uu_part_len,
+                                     &sha256_digest,
+                                     &sha256_digest_len,
+                                     &data_length,
+                                     &bpak_file)) {
         return NULL;
     }
 
@@ -593,8 +600,7 @@ static PyObject* part_verify(PyObject*self, PyObject* args, PyObject *kwds)
         return NULL;
     }
 
-    rc = pb_api_partition_verify(session->ctx, uu_part, sha256_digest,
-                data_length, bpak_file);
+    rc = pb_api_partition_verify(session->ctx, uu_part, sha256_digest, data_length, bpak_file);
 
     if (rc != PB_RESULT_OK) {
         return pb_exception_from_rc(rc);
@@ -603,10 +609,10 @@ static PyObject* part_verify(PyObject*self, PyObject* args, PyObject *kwds)
     Py_RETURN_NONE;
 }
 
-static PyObject* boot_set_boot_part(PyObject* self, PyObject* args, PyObject *kwds)
+static PyObject *boot_set_boot_part(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    struct pb_session* session = (struct pb_session*)self;
-    static char *kwlist[] = {"uuid", NULL};
+    struct pb_session *session = (struct pb_session *)self;
+    static char *kwlist[] = { "uuid", NULL };
     uint8_t *boot_uu = NULL;
     size_t boot_uu_len = 0;
     int rc;
@@ -628,10 +634,10 @@ static PyObject* boot_set_boot_part(PyObject* self, PyObject* args, PyObject *kw
     Py_RETURN_NONE;
 }
 
-static PyObject* boot_partition(PyObject* self, PyObject* args, PyObject* kwds)
+static PyObject *boot_partition(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    struct pb_session* session = (struct pb_session*)self;
-    static char *kwlist[] = {"uuid", NULL};
+    struct pb_session *session = (struct pb_session *)self;
+    static char *kwlist[] = { "uuid", NULL };
     uint8_t *boot_uu = NULL;
     size_t boot_uu_len = 0;
     int rc;
@@ -655,10 +661,10 @@ static PyObject* boot_partition(PyObject* self, PyObject* args, PyObject* kwds)
     Py_RETURN_NONE;
 }
 
-static PyObject* board_run_command(PyObject *self, PyObject* args, PyObject* kwds)
+static PyObject *board_run_command(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    struct pb_session* session = (struct pb_session*)self;
-    static char *kwlist[] = {"cmd", "args", NULL};
+    struct pb_session *session = (struct pb_session *)self;
+    static char *kwlist[] = { "cmd", "args", NULL };
     unsigned int cmd;
     uint8_t *cmd_args = NULL;
     size_t cmd_args_len = 0;
@@ -677,8 +683,7 @@ static PyObject* board_run_command(PyObject *self, PyObject* args, PyObject* kwd
 
     memset(response, 0, sizeof(response));
 
-    rc = pb_api_board_command(session->ctx, cmd, cmd_args, cmd_args_len,
-                                response, &response_size);
+    rc = pb_api_board_command(session->ctx, cmd, cmd_args, cmd_args_len, response, &response_size);
     if (rc != PB_RESULT_OK) {
         return pb_exception_from_rc(rc);
     }
@@ -688,56 +693,160 @@ static PyObject* board_run_command(PyObject *self, PyObject* args, PyObject* kwd
 
 static PyMethodDef PbSession_methods[] = {
     /* Password API */
-    {"authenticate", (PyCFunction)(void(*)(void))authenticate, METH_VARARGS | METH_KEYWORDS, "Authenticate towards punchboot"},
-    {"authenticate_dsa_token", (PyCFunction)(void(*)(void))authenticate_dsa_token, METH_VARARGS | METH_KEYWORDS, "Authenticate towards punchboot"},
+    {
+        "authenticate",
+        (PyCFunction)(void (*)(void))authenticate,
+        METH_VARARGS | METH_KEYWORDS,
+        "Authenticate towards punchboot",
+    },
+    {
+        "authenticate_dsa_token",
+        (PyCFunction)(void (*)(void))authenticate_dsa_token,
+        METH_VARARGS | METH_KEYWORDS,
+        "Authenticate towards punchboot",
+    },
     /* Device API */
-    {"device_reset", device_reset, METH_NOARGS, "Resets Device"},
-    {"device_get_punchboot_version", device_get_punchboot_version, METH_NOARGS, "Shows punchboot version on device"},
-    {"device_get_uuid", device_get_uuid, METH_NOARGS, "Shows device UUID"},
-    {"device_get_boardname", device_get_boardname, METH_NOARGS, "Shows device board name"},
+    {
+        "device_reset",
+        device_reset,
+        METH_NOARGS,
+        "Resets Device",
+    },
+    {
+        "device_get_punchboot_version",
+        device_get_punchboot_version,
+        METH_NOARGS,
+        "Shows punchboot version on device",
+    },
+    {
+        "device_get_uuid",
+        device_get_uuid,
+        METH_NOARGS,
+        "Shows device UUID",
+    },
+    {
+        "device_get_boardname",
+        device_get_boardname,
+        METH_NOARGS,
+        "Shows device board name",
+    },
     /* SLC API */
-    {"slc_get_lifecycle", slc_get_lifecycle, METH_NOARGS, "Reads SLC configuration"},
-    {"slc_set_configuration", slc_set_configuration, METH_NOARGS, "Set SLC configuration, including burning fuses."},
-    {"slc_set_configuration_lock", slc_set_configuration_locked, METH_NOARGS, "Lock SLC configuration"},
-    {"slc_revoke_key", (PyCFunction)(void(*)(void))slc_revoke_key, METH_VARARGS | METH_KEYWORDS, "Revoke secure boot keys"},
-    {"slc_get_active_keys", slc_get_active_keys, METH_NOARGS, "Reads active secure boot Key IDs"},
-    {"slc_get_revoked_keys", slc_get_revoked_keys, METH_NOARGS, "Reads revoked secure boot Key IDs"},
+    {
+        "slc_get_lifecycle",
+        slc_get_lifecycle,
+        METH_NOARGS,
+        "Reads SLC configuration",
+    },
+    {
+        "slc_set_configuration",
+        slc_set_configuration,
+        METH_NOARGS,
+        "Set SLC configuration, including burning fuses.",
+    },
+    {
+        "slc_set_configuration_lock",
+        slc_set_configuration_locked,
+        METH_NOARGS,
+        "Lock SLC configuration",
+    },
+    {
+        "slc_revoke_key",
+        (PyCFunction)(void (*)(void))slc_revoke_key,
+        METH_VARARGS | METH_KEYWORDS,
+        "Revoke secure boot keys",
+    },
+    {
+        "slc_get_active_keys",
+        slc_get_active_keys,
+        METH_NOARGS,
+        "Reads active secure boot Key IDs",
+    },
+    {
+        "slc_get_revoked_keys",
+        slc_get_revoked_keys,
+        METH_NOARGS,
+        "Reads revoked secure boot Key IDs",
+    },
     /* Part API */
-    {"part_get_partitions", part_get_partitions, METH_NOARGS, "Return available partitions"},
-    {"part_table_install", (PyCFunction)(void(*)(void))part_table_install, METH_VARARGS | METH_KEYWORDS, "Install partition table"},
-    {"part_write", (PyCFunction)(void(*)(void))part_write, METH_VARARGS | METH_KEYWORDS, "Write file to partition"},
-    {"part_read", (PyCFunction)(void(*)(void))part_read, METH_VARARGS | METH_KEYWORDS, "Write file to partition"},
-    {"part_verify", (PyCFunction)(void(*)(void))part_verify, METH_VARARGS | METH_KEYWORDS, "Verify that partition is flashed with specified file"},
-    {"part_erase", (PyCFunction)(void(*)(void))part_erase, METH_VARARGS | METH_KEYWORDS, "Erase the contents of a partition"},
+    {
+        "part_get_partitions",
+        part_get_partitions,
+        METH_NOARGS,
+        "Return available partitions",
+    },
+    {
+        "part_table_install",
+        (PyCFunction)(void (*)(void))part_table_install,
+        METH_VARARGS | METH_KEYWORDS,
+        "Install partition table",
+    },
+    {
+        "part_write",
+        (PyCFunction)(void (*)(void))part_write,
+        METH_VARARGS | METH_KEYWORDS,
+        "Write file to partition",
+    },
+    {
+        "part_read",
+        (PyCFunction)(void (*)(void))part_read,
+        METH_VARARGS | METH_KEYWORDS,
+        "Write file to partition",
+    },
+    {
+        "part_verify",
+        (PyCFunction)(void (*)(void))part_verify,
+        METH_VARARGS | METH_KEYWORDS,
+        "Verify that partition is flashed with specified file",
+    },
+    {
+        "part_erase",
+        (PyCFunction)(void (*)(void))part_erase,
+        METH_VARARGS | METH_KEYWORDS,
+        "Erase the contents of a partition",
+    },
     /* Boot API */
-    {"boot_set_boot_part", (PyCFunction)(void(*)(void))boot_set_boot_part, METH_VARARGS | METH_KEYWORDS, "Set active boot partition"},
-    {"boot_partition", (PyCFunction)(void(*)(void))boot_partition, METH_VARARGS | METH_KEYWORDS, "Boot partition"},
+    {
+        "boot_set_boot_part",
+        (PyCFunction)(void (*)(void))boot_set_boot_part,
+        METH_VARARGS | METH_KEYWORDS,
+        "Set active boot partition",
+    },
+    {
+        "boot_partition",
+        (PyCFunction)(void (*)(void))boot_partition,
+        METH_VARARGS | METH_KEYWORDS,
+        "Boot partition",
+    },
     /* Board API */
-    {"board_run_command", (PyCFunction)(void(*)(void))board_run_command, METH_VARARGS | METH_KEYWORDS, "Run board specific command"},
+    {
+        "board_run_command",
+        (PyCFunction)(void (*)(void))board_run_command,
+        METH_VARARGS | METH_KEYWORDS,
+        "Run board specific command",
+    },
     { NULL },
 };
 
 static PyTypeObject PbSession = {
-    PyVarObject_HEAD_INIT(NULL, 0)
-    .tp_name = "punchboot.Session",
+    PyVarObject_HEAD_INIT(NULL, 0).tp_name = "punchboot.Session",
     .tp_doc = PyDoc_STR("Punchboot session object towards one board"),
     .tp_basicsize = sizeof(struct pb_session),
     .tp_itemsize = 0,
     .tp_flags = Py_TPFLAGS_DEFAULT,
     .tp_new = PyType_GenericNew,
-    .tp_init = (initproc) PbSession_init,
-    .tp_dealloc = (destructor) PbSession_dealloc,
+    .tp_init = (initproc)PbSession_init,
+    .tp_dealloc = (destructor)PbSession_dealloc,
     .tp_methods = PbSession_methods,
 };
 
-static PyObject* wait_for_device(PyObject* self, PyObject* args, PyObject* kwds)
+static PyObject *wait_for_device(PyObject *self, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"timeout", NULL};
+    static char *kwlist[] = { "timeout", NULL };
     int64_t timeout = -1;
     struct pb_context *ctx;
     uint8_t uuid[16];
     int rc;
-    (void) self;
+    (void)self;
 
     /* Allow passing None for args */
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|k", kwlist, &timeout)) {
@@ -770,15 +879,15 @@ static PyObject* wait_for_device(PyObject* self, PyObject* args, PyObject* kwds)
 
 static void add_list_entry(const char *device_uuid, void *priv)
 {
-    PyObject *list = (PyObject *) priv;
+    PyObject *list = (PyObject *)priv;
     PyList_Append(list, Py_BuildValue("s", device_uuid));
 }
 
-static PyObject* list_usb_devices(PyObject* Py_UNUSED(self), PyObject* Py_UNUSED(args))
+static PyObject *list_usb_devices(PyObject *Py_UNUSED(self), PyObject *Py_UNUSED(args))
 {
     int rc = 0;
-    PyObject* result = NULL;
-    struct pb_context* local_ctx = NULL;
+    PyObject *result = NULL;
+    struct pb_context *local_ctx = NULL;
 
     rc = pb_api_create_context(&local_ctx, NULL);
     if (rc != PB_RESULT_OK) {
@@ -789,13 +898,13 @@ static PyObject* list_usb_devices(PyObject* Py_UNUSED(self), PyObject* Py_UNUSED
         return pb_exception_from_rc(rc);
     }
 
-    result  = PyList_New(0);
+    result = PyList_New(0);
 
     if (!result) {
         return PyErr_NoMemory();
     }
 
-    rc = pb_api_list_devices(local_ctx, add_list_entry, (void *) result);
+    rc = pb_api_list_devices(local_ctx, add_list_entry, (void *)result);
 
     if (rc != PB_RESULT_OK) {
         return pb_exception_from_rc(rc);
@@ -810,18 +919,30 @@ static PyObject* list_usb_devices(PyObject* Py_UNUSED(self), PyObject* Py_UNUSED
 }
 
 static PyMethodDef Punchboot_methods[] = {
-    {"wait_for_device", (PyCFunction)(void(*)(void))wait_for_device, METH_VARARGS | METH_KEYWORDS, "Wait for a device, optional timeout in seconds"},
-    {"list_usb_devices", list_usb_devices, METH_NOARGS, "Find all punchboot USB devices"},
-    {"version", version, METH_NOARGS, "Returns the library version"},
-    {NULL, NULL, 0, NULL}        /* Sentinel */
+    {
+        "wait_for_device",
+        (PyCFunction)(void (*)(void))wait_for_device,
+        METH_VARARGS | METH_KEYWORDS,
+        "Wait for a device, optional timeout in seconds",
+    },
+    {
+        "list_usb_devices",
+        list_usb_devices,
+        METH_NOARGS,
+        "Find all punchboot USB devices",
+    },
+    {
+        "version",
+        version,
+        METH_NOARGS,
+        "Returns the library version",
+    },
+    { NULL, NULL, 0, NULL } /* Sentinel */
 };
 
 static struct PyModuleDef Punchboot = {
-   PyModuleDef_HEAD_INIT,
-   .m_name = "_punchboot",
-   .m_doc = NULL,
-   .m_size = -1,
-   .m_methods = Punchboot_methods,
+    PyModuleDef_HEAD_INIT, .m_name = "_punchboot",         .m_doc = NULL,
+    .m_size = -1,          .m_methods = Punchboot_methods,
 };
 
 PyMODINIT_FUNC PyInit__punchboot(void)
@@ -830,13 +951,13 @@ PyMODINIT_FUNC PyInit__punchboot(void)
         return NULL;
     }
 
-    PyObject* mod = PyModule_Create(&Punchboot);
+    PyObject *mod = PyModule_Create(&Punchboot);
     if (mod == NULL) {
         return NULL;
     }
 
     Py_INCREF(&PbSession);
-    if (PyModule_AddObject(mod, "Session", (PyObject*) &PbSession) < 0) {
+    if (PyModule_AddObject(mod, "Session", (PyObject *)&PbSession) < 0) {
         Py_DECREF(&PbSession);
         Py_DECREF(mod);
         return NULL;

@@ -1,8 +1,8 @@
+#include <pb-tools/api.h>
+#include <pb-tools/pb-tools.h>
+#include <pb-tools/wire.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pb-tools/pb-tools.h>
-#include <pb-tools/api.h>
-#include <pb-tools/wire.h>
 
 PB_EXPORT int pb_api_device_reset(struct pb_context *ctx)
 {
@@ -16,33 +16,34 @@ PB_EXPORT int pb_api_device_reset(struct pb_context *ctx)
 
     rc = ctx->write(ctx, &cmd, sizeof(cmd));
 
-    if (rc != PB_RESULT_OK)
-    {
+    if (rc != PB_RESULT_OK) {
         return rc;
     }
 
     rc = ctx->read(ctx, &result, sizeof(result));
 
-    if (rc != PB_RESULT_OK)
-    {
+    if (rc != PB_RESULT_OK) {
         return rc;
     }
 
-    if (!pb_wire_valid_result(&result))
-    {
+    if (!pb_wire_valid_result(&result)) {
         return -PB_RESULT_ERROR;
     }
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }
 
 PB_EXPORT int pb_api_device_read_identifier(struct pb_context *ctx,
-                                  uint8_t *device_uuid,
-                                  size_t device_uuid_size,
-                                  char *board_id,
-                                  size_t board_id_size)
+                                            uint8_t *device_uuid,
+                                            size_t device_uuid_size,
+                                            char *board_id,
+                                            size_t board_id_size)
 {
     int rc;
     struct pb_command cmd;
@@ -76,13 +77,16 @@ PB_EXPORT int pb_api_device_read_identifier(struct pb_context *ctx,
     memcpy(device_uuid, id.device_uuid, sizeof(id.device_uuid));
     memcpy(board_id, id.board_id, sizeof(id.board_id));
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }
 
-PB_EXPORT int pb_api_device_read_caps(struct pb_context *ctx,
-                            struct pb_device_capabilities *caps)
+PB_EXPORT int pb_api_device_read_caps(struct pb_context *ctx, struct pb_device_capabilities *caps)
 {
     int rc;
     struct pb_command cmd;
@@ -116,7 +120,11 @@ PB_EXPORT int pb_api_device_read_caps(struct pb_context *ctx,
     caps->part_erase_timeout_ms = result_caps.part_erase_timeout_ms;
     caps->chunk_transfer_max_bytes = result_caps.chunk_transfer_max_bytes;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }

@@ -1,15 +1,15 @@
+#include <bpak/bpak.h>
+#include <errno.h>
+#include <pb-tools/api.h>
+#include <pb-tools/pb-tools.h>
+#include <pb-tools/wire.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <pb-tools/pb-tools.h>
-#include <pb-tools/api.h>
-#include <pb-tools/wire.h>
-#include <bpak/bpak.h>
 
 PB_EXPORT int pb_api_partition_read_table(struct pb_context *ctx,
-                                struct pb_partition_table_entry *out,
-                                int *entries)
+                                          struct pb_partition_table_entry *out,
+                                          int *entries)
 {
     int rc;
     struct pb_command cmd;
@@ -38,23 +38,26 @@ PB_EXPORT int pb_api_partition_read_table(struct pb_context *ctx,
 
     memcpy(&tbl_read_result, result.response, sizeof(tbl_read_result));
 
-    size_t bytes_to_read = (tbl_read_result.no_of_entries * \
-            sizeof(struct pb_result_part_table_entry));
+    size_t bytes_to_read =
+        (tbl_read_result.no_of_entries * sizeof(struct pb_result_part_table_entry));
 
-    ctx->d(ctx, 2, "%s: %i partitions, %i bytes\n", __func__,
-                tbl_read_result.no_of_entries, bytes_to_read);
+    ctx->d(ctx,
+           2,
+           "%s: %i partitions, %i bytes\n",
+           __func__,
+           tbl_read_result.no_of_entries,
+           bytes_to_read);
 
     if (tbl_read_result.no_of_entries > (*entries))
         return -PB_RESULT_NO_MEMORY;
 
     ctx->d(ctx, 2, "%s: reading table %p\n", __func__, out);
 
-    struct pb_result_part_table_entry *tbl = malloc(bytes_to_read+1);
+    struct pb_result_part_table_entry *tbl = malloc(bytes_to_read + 1);
 
     rc = ctx->read(ctx, tbl, bytes_to_read);
 
-    if (rc != PB_RESULT_OK)
-    {
+    if (rc != PB_RESULT_OK) {
         free(tbl);
         return rc;
     }
@@ -65,22 +68,19 @@ PB_EXPORT int pb_api_partition_read_table(struct pb_context *ctx,
 
     rc = ctx->read(ctx, &result, sizeof(result));
 
-    if (rc != PB_RESULT_OK)
-    {
+    if (rc != PB_RESULT_OK) {
         ctx->d(ctx, 0, "%s: read error (%i)\n", __func__, rc);
         free(tbl);
         return rc;
     }
 
-    if (!pb_wire_valid_result(&result))
-    {
+    if (!pb_wire_valid_result(&result)) {
         ctx->d(ctx, 0, "%s: result error\n", __func__);
         free(tbl);
         return -PB_RESULT_ERROR;
     }
 
-    for (int i = 0; i < tbl_read_result.no_of_entries; i++)
-    {
+    for (int i = 0; i < tbl_read_result.no_of_entries; i++) {
         memcpy(out[i].uuid, tbl[i].uuid, 16);
         strncpy(out[i].description, tbl[i].description, 36);
         out[i].first_block = tbl[i].first_block;
@@ -90,14 +90,19 @@ PB_EXPORT int pb_api_partition_read_table(struct pb_context *ctx,
     }
 
     free(tbl);
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
 
     return result.result_code;
 }
 
 PB_EXPORT int pb_api_partition_install_table(struct pb_context *ctx,
-                                             const uint8_t *uu, uint8_t variant)
+                                             const uint8_t *uu,
+                                             uint8_t variant)
 {
     int rc;
     struct pb_command cmd;
@@ -124,16 +129,20 @@ PB_EXPORT int pb_api_partition_install_table(struct pb_context *ctx,
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }
 
 PB_EXPORT int pb_api_partition_verify(struct pb_context *ctx,
-                            uint8_t *uuid,
-                            uint8_t *sha256,
-                            uint32_t size,
-                            bool bpak)
+                                      uint8_t *uuid,
+                                      uint8_t *sha256,
+                                      uint32_t size,
+                                      bool bpak)
 {
     int rc;
     struct pb_command cmd;
@@ -167,15 +176,18 @@ PB_EXPORT int pb_api_partition_verify(struct pb_context *ctx,
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }
 
-
 PB_EXPORT int pb_api_partition_read_bpak(struct pb_context *ctx,
-                              uint8_t *uuid,
-                              struct bpak_header *header)
+                                         uint8_t *uuid,
+                                         struct bpak_header *header)
 {
     int rc;
     struct pb_command cmd;
@@ -187,8 +199,7 @@ PB_EXPORT int pb_api_partition_read_bpak(struct pb_context *ctx,
     memset(&read_command, 0, sizeof(read_command));
     memcpy(read_command.uuid, uuid, 16);
 
-    pb_wire_init_command2(&cmd, PB_CMD_PART_BPAK_READ, &read_command,
-                                    sizeof(read_command));
+    pb_wire_init_command2(&cmd, PB_CMD_PART_BPAK_READ, &read_command, sizeof(read_command));
 
     rc = ctx->write(ctx, &cmd, sizeof(cmd));
 
@@ -219,8 +230,12 @@ PB_EXPORT int pb_api_partition_read_bpak(struct pb_context *ctx,
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }
 
@@ -236,8 +251,7 @@ PB_EXPORT int pb_api_partition_erase(struct pb_context *ctx, uint8_t *uuid)
     memset(&erase_command, 0, sizeof(erase_command));
     memcpy(erase_command.uuid, uuid, 16);
 
-    pb_wire_init_command2(&cmd, PB_CMD_PART_ERASE, &erase_command,
-                                    sizeof(erase_command));
+    pb_wire_init_command2(&cmd, PB_CMD_PART_ERASE, &erase_command, sizeof(erase_command));
 
     rc = ctx->write(ctx, &cmd, sizeof(cmd));
 
@@ -252,12 +266,18 @@ PB_EXPORT int pb_api_partition_erase(struct pb_context *ctx, uint8_t *uuid)
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }
 
-static int read_part_table(struct pb_context* ctx, struct pb_partition_table_entry** table, int* entries)
+static int read_part_table(struct pb_context *ctx,
+                           struct pb_partition_table_entry **table,
+                           int *entries)
 {
     struct pb_partition_table_entry *tbl;
     int read_entries = 256;
@@ -276,7 +296,7 @@ static int read_part_table(struct pb_context* ctx, struct pb_partition_table_ent
 
     if (read_entries == 0) {
         free(tbl);
-        return -PB_RESULT_ERROR;  // TODO: Better error?
+        return -PB_RESULT_ERROR; // TODO: Better error?
     }
 
     *table = tbl;
@@ -284,9 +304,7 @@ static int read_part_table(struct pb_context* ctx, struct pb_partition_table_ent
     return 0;
 }
 
-PB_EXPORT int pb_api_partition_write(struct pb_context *ctx,
-                                     int file_fd,
-                                     uint8_t *uuid)
+PB_EXPORT int pb_api_partition_write(struct pb_context *ctx, int file_fd, uint8_t *uuid)
 {
     struct pb_partition_table_entry *tbl;
     int tbl_entries;
@@ -303,7 +321,7 @@ PB_EXPORT int pb_api_partition_write(struct pb_context *ctx,
     bool bpak_file = false;
     int rc;
 
-    if (lseek(file_fd, 0, SEEK_SET) == (off_t) -1) {
+    if (lseek(file_fd, 0, SEEK_SET) == (off_t)-1) {
         return -PB_RESULT_IO_ERROR;
     }
 
@@ -349,15 +367,14 @@ PB_EXPORT int pb_api_partition_write(struct pb_context *ctx,
     if (read_bytes < 0) {
         rc = -PB_RESULT_IO_ERROR;
         goto err_free_buf;
-    } else if (read_bytes == sizeof(header) &&
-               bpak_valid_header(&header) == BPAK_OK) {
+    } else if (read_bytes == sizeof(header) && bpak_valid_header(&header) == BPAK_OK) {
         bpak_file = true;
     } else {
         lseek(file_fd, 0, SEEK_SET);
     }
 
     if (bpak_file) {
-        offset = part_size  - sizeof(header);
+        offset = part_size - sizeof(header);
 
         rc = pb_api_stream_prepare_buffer(ctx, buffer_id, &header, sizeof(header));
 
@@ -410,7 +427,7 @@ PB_EXPORT int pb_api_partition_read(struct pb_context *ctx, int file_fd, uint8_t
     size_t chunk_size;
     size_t offset = 0;
     int buffer_id = 0;
-    unsigned char* buffer;
+    unsigned char *buffer;
     int entries = 128;
     bool part_found = false;
     size_t bytes_left;
@@ -480,10 +497,10 @@ PB_EXPORT int pb_api_partition_read(struct pb_context *ctx, int file_fd, uint8_t
 
         ssize_t bytes_written = write(file_fd, buffer, to_read);
 
-        if (bytes_written != (ssize_t) to_read) {
-             rc = -PB_RESULT_IO_ERROR;
-             fprintf(stderr, "Error: Write failed (%i)\n", -errno);
-             break;
+        if (bytes_written != (ssize_t)to_read) {
+            rc = -PB_RESULT_IO_ERROR;
+            fprintf(stderr, "Error: Write failed (%i)\n", -errno);
+            break;
         }
 
         offset += to_read;

@@ -1,11 +1,11 @@
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <getopt.h>
-#include <stdbool.h>
 #include "uuid/uuid.h"
+#include <getopt.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #include "tool.h"
 
@@ -19,17 +19,14 @@ static int dev_show(struct pb_context *ctx)
 
     rc = pb_api_bootloader_version(ctx, version, sizeof(version));
 
-    if (rc == PB_RESULT_OK)
-    {
+    if (rc == PB_RESULT_OK) {
         printf("Bootloader version: %s\n", version);
     }
 
+    rc = pb_api_device_read_identifier(
+        ctx, device_uu, sizeof(device_uu), board_name, sizeof(board_name));
 
-    rc = pb_api_device_read_identifier(ctx, device_uu, sizeof(device_uu),
-                                            board_name, sizeof(board_name));
-
-    if (rc == PB_RESULT_OK)
-    {
+    if (rc == PB_RESULT_OK) {
         uuid_unparse(device_uu, device_uu_str);
         printf("Device UUID:        %s\n", device_uu_str);
         printf("Board name:         %s\n", board_name);
@@ -56,60 +53,90 @@ int action_dev(int argc, char **argv)
     struct pb_context *ctx = NULL;
     const char *device_uuid = NULL;
 
-    struct option long_options[] =
-    {
-        {"help",        no_argument,       0,  'h' },
-        {"verbose",     no_argument,       0,  'v' },
-        {"transport",   required_argument, 0,  't' },
-        {"device",      required_argument, 0,  'd' },
-        {"show",        no_argument,       0,  'S' },
-        {"reset",       no_argument,       0,  'r' },
-        {"wait",        required_argument, 0,  'w' },
-        {0,             0,                 0,   0  }
+    struct option long_options[] = {
+        {
+            "help",
+            no_argument,
+            0,
+            'h',
+        },
+        {
+            "verbose",
+            no_argument,
+            0,
+            'v',
+        },
+        {
+            "transport",
+            required_argument,
+            0,
+            't',
+        },
+        {
+            "device",
+            required_argument,
+            0,
+            'd',
+        },
+        {
+            "show",
+            no_argument,
+            0,
+            'S',
+        },
+        {
+            "reset",
+            no_argument,
+            0,
+            'r',
+        },
+        {
+            "wait",
+            required_argument,
+            0,
+            'w',
+        },
+        { 0, 0, 0, 0 },
     };
 
-    while ((opt = getopt_long(argc, argv, "hvt:d:Srw:",
-                   long_options, &long_index )) != -1)
-    {
-        switch (opt)
-        {
-            case 'h':
-                help_dev();
-                return 0;
-            case 'v':
-                pb_inc_verbosity();
+    while ((opt = getopt_long(argc, argv, "hvt:d:Srw:", long_options, &long_index)) != -1) {
+        switch (opt) {
+        case 'h':
+            help_dev();
+            return 0;
+        case 'v':
+            pb_inc_verbosity();
             break;
-            case 't':
-                transport = (const char *) optarg;
+        case 't':
+            transport = (const char *)optarg;
             break;
-            case 'd':
-                device_uuid = (const char *) optarg;
+        case 'd':
+            device_uuid = (const char *)optarg;
             break;
-            case 'S':
-                flag_show = true;
+        case 'S':
+            flag_show = true;
             break;
-            case 'r':
-                flag_reset = true;
+        case 'r':
+            flag_reset = true;
             break;
-            case 'w':
-                flag_wait = true;
-                wait_timeout_seconds = strtol(optarg, NULL, 0);
+        case 'w':
+            flag_wait = true;
+            wait_timeout_seconds = strtol(optarg, NULL, 0);
             break;
-            case '?':
-                fprintf(stderr, "Unknown option: %c\n", optopt);
-                return -1;
+        case '?':
+            fprintf(stderr, "Unknown option: %c\n", optopt);
+            return -1;
             break;
-            case ':':
-                fprintf(stderr, "Missing arg for %c\n", optopt);
-                return -1;
+        case ':':
+            fprintf(stderr, "Missing arg for %c\n", optopt);
+            return -1;
             break;
-            default:
-               return -1;
+        default:
+            return -1;
         }
     }
 
-    if (argc <= 1)
-    {
+    if (argc <= 1) {
         help_dev();
         return 0;
     }
@@ -122,8 +149,7 @@ int action_dev(int argc, char **argv)
 
     if (flag_wait) {
         if (pb_get_verbosity() > 1) {
-            printf("Waiting for device (timeout %li seconds)\n",
-                                    wait_timeout_seconds);
+            printf("Waiting for device (timeout %li seconds)\n", wait_timeout_seconds);
         }
 
         for (int i = 0; i < wait_timeout_seconds; i++) {
@@ -161,10 +187,8 @@ int action_dev(int argc, char **argv)
     else if (flag_reset)
         rc = dev_reset(ctx);
 
-    if (rc != PB_RESULT_OK)
-    {
-        fprintf(stderr, "Error: Command failed %i (%s)\n", rc,
-                        pb_error_string(rc));
+    if (rc != PB_RESULT_OK) {
+        fprintf(stderr, "Error: Command failed %i (%s)\n", rc, pb_error_string(rc));
     }
 
 err_free_ctx_out:

@@ -7,19 +7,18 @@
  *
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
 #include <libusb.h>
-#include <pb-tools/pb-tools.h>
 #include <pb-tools/api.h>
-#include <pb-tools/wire.h>
 #include <pb-tools/error.h>
+#include <pb-tools/pb-tools.h>
 #include <pb-tools/usb.h>
+#include <pb-tools/wire.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-struct pb_usb_private
-{
+struct pb_usb_private {
     libusb_device *dev;
     libusb_context *usb_ctx;
     libusb_device_handle *h;
@@ -27,11 +26,11 @@ struct pb_usb_private
     const char *device_uuid;
 };
 
-#define PB_USB_PRIVATE(__ctx) ((struct pb_usb_private *) ctx->transport)
-#define PB_USB_VID 0x1209
-#define PB_USB_PID 0x2019
+#define PB_USB_PRIVATE(__ctx) ((struct pb_usb_private *)ctx->transport)
+#define PB_USB_VID            0x1209
+#define PB_USB_PID            0x2019
 
-static void pb_usb_close_handle(struct pb_usb_private* p)
+static void pb_usb_close_handle(struct pb_usb_private *p)
 {
     if (p->h == NULL)
         return;
@@ -66,8 +65,7 @@ static int pb_usb_connect(struct pb_context *ctx)
     if (libusb_get_device_list(NULL, &devs) < 0)
         return -PB_RESULT_ERROR;
 
-    while ((dev = devs[i++]) != NULL)
-    {
+    while ((dev = devs[i++]) != NULL) {
         struct libusb_device_descriptor desc;
 
         rc = libusb_get_device_descriptor(dev, &desc);
@@ -75,17 +73,15 @@ static int pb_usb_connect(struct pb_context *ctx)
         if (rc < 0)
             continue;
 
-        if ((desc.idVendor == PB_USB_VID) && (desc.idProduct == PB_USB_PID))
-        {
-            if (priv->device_uuid)
-            {
+        if ((desc.idVendor == PB_USB_VID) && (desc.idProduct == PB_USB_PID)) {
+            if (priv->device_uuid) {
                 libusb_open(dev, &priv->h);
-                libusb_get_string_descriptor_ascii(priv->h, desc.iSerialNumber,
-                         device_serial, sizeof(device_serial));
+                libusb_get_string_descriptor_ascii(
+                    priv->h, desc.iSerialNumber, device_serial, sizeof(device_serial));
 
                 pb_usb_close_handle(priv);
 
-                if (strcmp((char *) device_serial, priv->device_uuid) != 0)
+                if (strcmp((char *)device_serial, priv->device_uuid) != 0)
                     continue;
             }
             priv->dev = dev;
@@ -94,27 +90,24 @@ static int pb_usb_connect(struct pb_context *ctx)
         }
     }
 
-    if (!found_device)
-    {
+    if (!found_device) {
         rc = -PB_RESULT_NOT_FOUND;
         goto err_free_devs_out;
     }
 
     rc = libusb_open(priv->dev, &priv->h);
 
-    if (rc != 0)
-    {
+    if (rc != 0) {
         rc = -PB_RESULT_ERROR;
         goto err_free_devs_out;
     }
 
     if (libusb_kernel_driver_active(priv->h, 0))
-         libusb_detach_kernel_driver(priv->h, 0);
+        libusb_detach_kernel_driver(priv->h, 0);
 
     rc = libusb_claim_interface(priv->h, 0);
 
-    if (rc != 0)
-    {
+    if (rc != 0) {
         rc = -PB_RESULT_ERROR;
         goto err_close_dev_out;
     }
@@ -150,15 +143,13 @@ static int pb_usb_free(struct pb_context *ctx)
     return PB_RESULT_OK;
 }
 
-
 static int pb_usb_read(struct pb_context *ctx, void *bfr, size_t sz)
 {
     struct pb_usb_private *priv = PB_USB_PRIVATE(ctx);
     int err = 0;
     int rx_sz = 0;
 
-    err = libusb_bulk_transfer(priv->h, (LIBUSB_ENDPOINT_IN | 1),
-                                                bfr, sz , &rx_sz, 10000);
+    err = libusb_bulk_transfer(priv->h, (LIBUSB_ENDPOINT_IN | 1), bfr, sz, &rx_sz, 10000);
 
     if (err < 0)
         return -PB_RESULT_TRANSFER_ERROR;
@@ -172,8 +163,7 @@ static int pb_usb_write(struct pb_context *ctx, const void *bfr, size_t sz)
     int err = 0;
     int rx_sz = 0;
 
-    err = libusb_bulk_transfer(priv->h, (LIBUSB_ENDPOINT_OUT | 2),
-                                             (void *) bfr, sz , &rx_sz, 10000);
+    err = libusb_bulk_transfer(priv->h, (LIBUSB_ENDPOINT_OUT | 2), (void *)bfr, sz, &rx_sz, 10000);
 
     if (err < 0)
         return -PB_RESULT_TRANSFER_ERROR;
@@ -181,7 +171,9 @@ static int pb_usb_write(struct pb_context *ctx, const void *bfr, size_t sz)
     return PB_RESULT_OK;
 }
 
-static int pb_usb_list(struct pb_context *ctx, void (*list_cb)(const char *uuid_str, void *priv), void *list_cb_priv)
+static int pb_usb_list(struct pb_context *ctx,
+                       void (*list_cb)(const char *uuid_str, void *priv),
+                       void *list_cb_priv)
 {
     int rc = PB_RESULT_OK;
     int i = 0;
@@ -202,12 +194,12 @@ static int pb_usb_list(struct pb_context *ctx, void (*list_cb)(const char *uuid_
 
         if ((desc.idVendor == PB_USB_VID) && (desc.idProduct == PB_USB_PID)) {
             libusb_open(dev, &priv->h);
-            libusb_get_string_descriptor_ascii(priv->h, desc.iSerialNumber,
-                     device_serial, sizeof(device_serial));
+            libusb_get_string_descriptor_ascii(
+                priv->h, desc.iSerialNumber, device_serial, sizeof(device_serial));
 
             pb_usb_close_handle(priv);
 
-            list_cb((const char *) device_serial, list_cb_priv);
+            list_cb((const char *)device_serial, list_cb_priv);
         }
     }
 
@@ -234,4 +226,3 @@ PB_EXPORT int pb_usb_transport_init(struct pb_context *ctx, const char *device_u
 
     return ctx->init(ctx);
 }
-

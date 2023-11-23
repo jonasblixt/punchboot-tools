@@ -14,41 +14,36 @@
 #include <unistd.h>
 
 #ifdef WINDOWS
-  #include <winsock2.h>
-  #include <Ws2tcpip.h>
+#include <winsock2.h>
+#include <Ws2tcpip.h>
 #else
-  #include <sys/types.h>
-  #include <sys/socket.h>
-  #include <sys/un.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
 #endif
 
-#include <pb-tools/pb-tools.h>
 #include <pb-tools/api.h>
-#include <pb-tools/wire.h>
 #include <pb-tools/error.h>
+#include <pb-tools/pb-tools.h>
 #include <pb-tools/socket.h>
+#include <pb-tools/wire.h>
 
-struct pb_socket_private
-{
+struct pb_socket_private {
     int fd;
     struct sockaddr_un addr;
     const char *socket_path;
 };
 
-#define PB_SOCKET_PRIVATE(__ctx) ((struct pb_socket_private *) ctx->transport)
-
+#define PB_SOCKET_PRIVATE(__ctx) ((struct pb_socket_private *)ctx->transport)
 
 static int pb_socket_connect(struct pb_context *ctx)
 {
     int rc;
     struct pb_socket_private *priv = PB_SOCKET_PRIVATE(ctx);
 
+    rc = connect(priv->fd, (struct sockaddr *)&priv->addr, sizeof(priv->addr));
 
-    rc = connect(priv->fd, (struct sockaddr*) &priv->addr,
-                            sizeof(priv->addr));
-
-    if (rc != 0)
-    {
+    if (rc != 0) {
         return -PB_RESULT_ERROR;
     }
 
@@ -58,11 +53,11 @@ static int pb_socket_connect(struct pb_context *ctx)
 static int pb_socket_read(struct pb_context *ctx, void *bfr, size_t sz)
 {
     struct pb_socket_private *priv = PB_SOCKET_PRIVATE(ctx);
-    uintptr_t buf_p = (uintptr_t) bfr;
+    uintptr_t buf_p = (uintptr_t)bfr;
     size_t bytes_to_xfer = sz;
 
     while (bytes_to_xfer > 0) {
-        ssize_t bytes = read(priv->fd, (void *) buf_p, sz);
+        ssize_t bytes = read(priv->fd, (void *)buf_p, sz);
         if (bytes < 0)
             return -PB_RESULT_ERROR;
         bytes_to_xfer -= bytes;
@@ -75,7 +70,7 @@ static int pb_socket_read(struct pb_context *ctx, void *bfr, size_t sz)
 static int pb_socket_write(struct pb_context *ctx, const void *bfr, size_t sz)
 {
     struct pb_socket_private *priv = PB_SOCKET_PRIVATE(ctx);
-    uintptr_t buf_p = (uintptr_t) bfr;
+    uintptr_t buf_p = (uintptr_t)bfr;
     size_t bytes_to_xfer = sz;
 
     while (bytes_to_xfer > 0) {
@@ -97,17 +92,15 @@ static int pb_socket_init(struct pb_context *ctx)
 
     priv->fd = socket(AF_UNIX, SOCK_STREAM, 0);
 
-    if (priv->fd == -1)
-    {
+    if (priv->fd == -1) {
         rc = -PB_RESULT_ERROR;
         goto err_free_transport;
     }
 
     priv->addr.sun_family = AF_UNIX;
 
-    strncpy(priv->addr.sun_path, priv->socket_path,
-                sizeof(priv->addr.sun_path)-1);
-    
+    strncpy(priv->addr.sun_path, priv->socket_path, sizeof(priv->addr.sun_path) - 1);
+
     return PB_RESULT_OK;
 
 err_free_transport:
@@ -129,8 +122,7 @@ static int pb_socket_free(struct pb_context *ctx)
     return PB_RESULT_OK;
 }
 
-PB_EXPORT int pb_socket_transport_init(struct pb_context *ctx,
-                             const char socket_path[])
+PB_EXPORT int pb_socket_transport_init(struct pb_context *ctx, const char socket_path[])
 {
     ctx->transport = malloc(sizeof(struct pb_socket_private));
 
@@ -150,4 +142,3 @@ PB_EXPORT int pb_socket_transport_init(struct pb_context *ctx,
 
     return ctx->init(ctx);
 }
-

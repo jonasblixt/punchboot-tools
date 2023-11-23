@@ -1,12 +1,10 @@
+#include <pb-tools/api.h>
+#include <pb-tools/pb-tools.h>
+#include <pb-tools/wire.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pb-tools/pb-tools.h>
-#include <pb-tools/api.h>
-#include <pb-tools/wire.h>
 
-PB_EXPORT int pb_api_bootloader_version(struct pb_context *ctx,
-                              char *version,
-                              size_t size)
+PB_EXPORT int pb_api_bootloader_version(struct pb_context *ctx, char *version, size_t size)
 {
     int rc;
     struct pb_command cmd;
@@ -30,16 +28,20 @@ PB_EXPORT int pb_api_bootloader_version(struct pb_context *ctx,
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    p = (char *) result.response;
+    p = (char *)result.response;
 
-    if ((strlen(p)+1) > size)
+    if ((strlen(p) + 1) > size)
         return -PB_RESULT_NO_MEMORY;
 
     memset(version, 0, size);
     memcpy(version, p, strlen(p));
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
 
     return result.result_code;
 }

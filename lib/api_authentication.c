@@ -1,14 +1,14 @@
+#include <pb-tools/api.h>
+#include <pb-tools/pb-tools.h>
+#include <pb-tools/wire.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pb-tools/pb-tools.h>
-#include <pb-tools/api.h>
-#include <pb-tools/wire.h>
 
 static int internal_pb_api_authenticate(struct pb_context *ctx,
-                            enum pb_auth_method method,
-                            uint32_t key_id,
-                            uint8_t *data,
-                            size_t size)
+                                        enum pb_auth_method method,
+                                        uint32_t key_id,
+                                        uint8_t *data,
+                                        size_t size)
 {
     int rc;
     struct pb_command cmd;
@@ -44,8 +44,7 @@ static int internal_pb_api_authenticate(struct pb_context *ctx,
     if (result.result_code != PB_RESULT_OK)
         return result.result_code;
 
-    if (size)
-    {
+    if (size) {
         memset(auth_buf, 0, sizeof(auth_buf));
         memcpy(auth_buf, data, size);
 
@@ -63,37 +62,33 @@ static int internal_pb_api_authenticate(struct pb_context *ctx,
             return -PB_RESULT_ERROR;
     }
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }
 
-PB_EXPORT int pb_api_authenticate_password(struct pb_context *ctx,
-                                    uint8_t *data,
-                                    size_t size)
+PB_EXPORT int pb_api_authenticate_password(struct pb_context *ctx, uint8_t *data, size_t size)
 {
     ctx->d(ctx, 2, "%s: call\n", __func__);
 
-    return internal_pb_api_authenticate(ctx, PB_AUTH_PASSWORD,
-                                        0, data, size);
+    return internal_pb_api_authenticate(ctx, PB_AUTH_PASSWORD, 0, data, size);
 }
 
-PB_EXPORT int pb_api_authenticate_key(struct pb_context *ctx,
-                            uint32_t key_id,
-                            uint8_t *data,
-                            size_t size)
+PB_EXPORT int
+pb_api_authenticate_key(struct pb_context *ctx, uint32_t key_id, uint8_t *data, size_t size)
 {
     ctx->d(ctx, 2, "%s: call\n", __func__);
 
-    return internal_pb_api_authenticate(ctx, PB_AUTH_ASYM_TOKEN,
-                                        key_id, data, size);
+    return internal_pb_api_authenticate(ctx, PB_AUTH_ASYM_TOKEN, key_id, data, size);
 }
-
-
 
 PB_EXPORT int pb_api_auth_set_otp_password(struct pb_context *ctx,
-                                 const char *password,
-                                 size_t size)
+                                           const char *password,
+                                           size_t size)
 {
     int rc;
     struct pb_command cmd;
@@ -101,11 +96,9 @@ PB_EXPORT int pb_api_auth_set_otp_password(struct pb_context *ctx,
 
     ctx->d(ctx, 2, "%s: call\n", __func__);
 
-    rc = pb_wire_init_command2(&cmd, PB_CMD_AUTH_SET_OTP_PASSWORD,
-                                    (char *) password, size);
+    rc = pb_wire_init_command2(&cmd, PB_CMD_AUTH_SET_OTP_PASSWORD, (char *)password, size);
 
-    if (rc != PB_RESULT_OK)
-    {
+    if (rc != PB_RESULT_OK) {
         ctx->d(ctx, 0, "%s: Password too long\n", __func__);
         return -PB_RESULT_ERROR;
     }
@@ -123,8 +116,12 @@ PB_EXPORT int pb_api_auth_set_otp_password(struct pb_context *ctx,
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
 
     return result.result_code;
 }

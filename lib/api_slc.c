@@ -1,13 +1,11 @@
+#include <pb-tools/api.h>
+#include <pb-tools/pb-tools.h>
+#include <pb-tools/wire.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pb-tools/pb-tools.h>
-#include <pb-tools/api.h>
-#include <pb-tools/wire.h>
 
-PB_EXPORT int pb_api_slc_read(struct pb_context *ctx,
-                       uint8_t  *slc,
-                       uint8_t *active_keys,
-                       uint8_t *revoked_keys)
+PB_EXPORT int
+pb_api_slc_read(struct pb_context *ctx, uint8_t *slc, uint8_t *active_keys, uint8_t *revoked_keys)
 {
     int rc;
     struct pb_command cmd;
@@ -26,8 +24,7 @@ PB_EXPORT int pb_api_slc_read(struct pb_context *ctx,
 
     rc = ctx->read(ctx, &result, sizeof(result));
 
-    if (rc != PB_RESULT_OK)
-    {
+    if (rc != PB_RESULT_OK) {
         return rc;
     }
 
@@ -58,16 +55,19 @@ PB_EXPORT int pb_api_slc_read(struct pb_context *ctx,
 
     rc = ctx->read(ctx, &result, sizeof(result));
 
-    if (rc != PB_RESULT_OK)
-    {
+    if (rc != PB_RESULT_OK) {
         return rc;
     }
 
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }
 
@@ -94,13 +94,15 @@ PB_EXPORT int pb_api_slc_set_configuration(struct pb_context *ctx)
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
 
     return result.result_code;
 }
-
 
 PB_EXPORT int pb_api_slc_set_configuration_lock(struct pb_context *ctx)
 {
@@ -125,8 +127,12 @@ PB_EXPORT int pb_api_slc_set_configuration_lock(struct pb_context *ctx)
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }
 
@@ -153,8 +159,12 @@ PB_EXPORT int pb_api_slc_set_end_of_life(struct pb_context *ctx)
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }
 
@@ -185,7 +195,11 @@ PB_EXPORT int pb_api_slc_revoke_key(struct pb_context *ctx, uint32_t key_id)
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }

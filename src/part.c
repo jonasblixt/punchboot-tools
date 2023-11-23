@@ -1,24 +1,24 @@
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <getopt.h>
-#include <stdbool.h>
-#include <fcntl.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <time.h>
-#include <bpak/bpak.h>
-#include <bpak/utils.h>
-#include <bpak/id.h>
-#include <inttypes.h>
+#include "sha256.h"
 #include "tool.h"
 #include "uuid/uuid.h"
-#include "sha256.h"
+#include <bpak/bpak.h>
+#include <bpak/id.h>
+#include <bpak/utils.h>
+#include <fcntl.h>
+#include <getopt.h>
+#include <inttypes.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
-#define PART_VERIFY_CHUNK_SZ (1024*1024)
+#define PART_VERIFY_CHUNK_SZ (1024 * 1024)
 
 static int part_verify(struct pb_context *ctx, const char *filename, const char *part_uuid)
 {
@@ -34,8 +34,7 @@ static int part_verify(struct pb_context *ctx, const char *filename, const char 
     mbedtls_sha256_init(&sha256);
     mbedtls_sha256_starts_ret(&sha256, 0);
 
-    if (!fp)
-    {
+    if (!fp) {
         fprintf(stderr, "Error: Could not open '%s'\n", filename);
         return -PB_RESULT_ERROR;
     }
@@ -47,46 +46,36 @@ static int part_verify(struct pb_context *ctx, const char *filename, const char 
 
     size_t read_bytes = fread(&header, 1, sizeof(header), fp);
 
-    if (read_bytes == sizeof(header) &&
-        (bpak_valid_header(&header) == BPAK_OK))
-    {
-        if (pb_get_verbosity() > 0)
-        {
+    if (read_bytes == sizeof(header) && (bpak_valid_header(&header) == BPAK_OK)) {
+        if (pb_get_verbosity() > 0) {
             printf("Detected bpak header\n");
         }
 
         bpak_file = true;
 
-        rc = mbedtls_sha256_update_ret(&sha256, (unsigned char *) &header,
-                                                sizeof(header));
+        rc = mbedtls_sha256_update_ret(&sha256, (unsigned char *)&header, sizeof(header));
 
-        if (rc != 0)
-        {
+        if (rc != 0) {
             rc = -PB_RESULT_ERROR;
             goto err_out;
         }
 
         file_size += sizeof(header);
-    }
-    else
-    {
+    } else {
         fseek(fp, 0, SEEK_SET);
     }
 
     unsigned char *chunk_buffer = malloc(PART_VERIFY_CHUNK_SZ);
 
-    if (!chunk_buffer)
-    {
+    if (!chunk_buffer) {
         rc = -PB_RESULT_NO_MEMORY;
         goto err_out;
     }
 
-    while ((read_bytes = fread(chunk_buffer, 1, PART_VERIFY_CHUNK_SZ, fp)) > 0)
-    {
+    while ((read_bytes = fread(chunk_buffer, 1, PART_VERIFY_CHUNK_SZ, fp)) > 0) {
         rc = mbedtls_sha256_update_ret(&sha256, chunk_buffer, read_bytes);
 
-        if (rc != 0)
-        {
+        if (rc != 0) {
             rc = -PB_RESULT_ERROR;
             goto err_free_out;
         }
@@ -133,7 +122,7 @@ static int part_write(struct pb_context *ctx, const char *filename, const char *
     return rc;
 }
 
-static int part_read(struct pb_context *ctx, const char* filename, const char* part_uuid)
+static int part_read(struct pb_context *ctx, const char *filename, const char *part_uuid)
 {
     int rc;
     int fd;
@@ -182,21 +171,11 @@ static int part_list(struct pb_context *ctx)
     if (!entries)
         goto err_out;
 
-    printf("%-37s   %-8s   %-7s   %-16s\n",
-                "Partition UUID",
-                "Flags",
-                "Size",
-                "Name");
-    printf("%-37s   %-8s   %-7s   %-16s\n",
-                "--------------",
-                "-----",
-                "----",
-                "----");
+    printf("%-37s   %-8s   %-7s   %-16s\n", "Partition UUID", "Flags", "Size", "Name");
+    printf("%-37s   %-8s   %-7s   %-16s\n", "--------------", "-----", "----", "----");
 
-    for (int i = 0; i < entries; i++)
-    {
-        size_t part_size = (tbl[i].last_block - tbl[i].first_block + 1) * \
-                            tbl[i].block_size;
+    for (int i = 0; i < entries; i++) {
+        size_t part_size = (tbl[i].last_block - tbl[i].first_block + 1) * tbl[i].block_size;
         char size_str[16];
         char flags_str[9] = "--------";
 
@@ -228,8 +207,7 @@ static int part_list(struct pb_context *ctx)
             flags_str[4] = 'R';
         else
             flags_str[4] = '-';
-        printf("%-37s   %-8s   %-7s   %-16s\n", uuid_str, flags_str, size_str,
-                                        tbl[i].description);
+        printf("%-37s   %-8s   %-7s   %-16s\n", uuid_str, flags_str, size_str, tbl[i].description);
     }
 
 err_out:
@@ -237,9 +215,7 @@ err_out:
     return rc;
 }
 
-static int print_bpak_header(struct bpak_header *h,
-                             char *part_uuid_str,
-                             char *part_description)
+static int print_bpak_header(struct bpak_header *h, char *part_uuid_str, char *part_description)
 {
     printf("Partition: %s (%s)\n", part_uuid_str, part_description);
     printf("Hash:      %s\n", bpak_hash_kind(h->hash_kind));
@@ -250,13 +226,10 @@ static int print_bpak_header(struct bpak_header *h,
 
     char string_output[128];
 
-    bpak_foreach_meta(h, m)
-    {
-        if (m->id)
-        {
+    bpak_foreach_meta(h, m) {
+        if (m->id) {
             bpak_meta_to_string(h, m, string_output, sizeof(string_output));
-            printf("    %8.8x   %-3u    %-20s ", m->id, m->size,
-                         bpak_id_to_string(m->id));
+            printf("    %8.8x   %-3u    %-20s ", m->id, m->size, bpak_id_to_string(m->id));
 
             if (m->part_id_ref)
                 printf("%8.8x", m->part_id_ref);
@@ -272,10 +245,8 @@ static int print_bpak_header(struct bpak_header *h,
 
     char flags_str[9] = "--------";
 
-    bpak_foreach_part(h, p)
-    {
-        if (p->id)
-        {
+    bpak_foreach_part(h, p) {
+        if (p->id) {
             if (p->flags & BPAK_FLAG_EXCLUDE_FROM_HASH)
                 flags_str[0] = 'h';
             else
@@ -286,8 +257,8 @@ static int print_bpak_header(struct bpak_header *h,
             else
                 flags_str[1] = '-';
 
-            printf("    %8.8x   %-12" PRIu64 " %-3u    %s",
-                                    p->id, p->size, p->pad_bytes, flags_str);
+            printf(
+                "    %8.8x   %-12" PRIu64 " %-3u    %s", p->id, p->size, p->pad_bytes, flags_str);
 
             if (p->flags & BPAK_FLAG_TRANSPORT)
                 printf("       %-12" PRIu64, p->transport_size);
@@ -319,8 +290,7 @@ static int part_show(struct pb_context *ctx, const char *part_uuid)
     if (!entries)
         goto err_out;
 
-    for (int i = 0; i < entries; i++)
-    {
+    for (int i = 0; i < entries; i++) {
         struct bpak_header header;
         uuid_unparse(tbl[i].uuid, uuid_str);
 
@@ -361,88 +331,154 @@ int action_part(int argc, char **argv)
     uuid_t part_uu;
     const char *filename = NULL;
 
-    struct option long_options[] =
-    {
-        {"help",        no_argument,       0,  'h' },
-        {"verbose",     no_argument,       0,  'v' },
-        {"transport",   required_argument, 0,  't' },
-        {"device",      required_argument, 0,  'd' },
-        {"write",       required_argument, 0,  'w' },
-        {"verify",      required_argument, 0,  'c' },
-        {"erase",       no_argument,       0,  'e' },
-        {"show",        no_argument,       0,  's' },
-        {"part",        required_argument, 0,  'p' },
-        {"install",     no_argument,       0,  'i' },
-        {"variant",     required_argument, 0,  'I' },
-        {"list",        no_argument,       0,  'l' },
-        {"read",        required_argument, 0,  'r' },
-        {"force",       no_argument,       0,  'F' },
-        {0,             0,                 0,   0  }
+    struct option long_options[] = {
+        {
+            "help",
+            no_argument,
+            0,
+            'h',
+        },
+        {
+            "verbose",
+            no_argument,
+            0,
+            'v',
+        },
+        {
+            "transport",
+            required_argument,
+            0,
+            't',
+        },
+        {
+            "device",
+            required_argument,
+            0,
+            'd',
+        },
+        {
+            "write",
+            required_argument,
+            0,
+            'w',
+        },
+        {
+            "verify",
+            required_argument,
+            0,
+            'c',
+        },
+        {
+            "erase",
+            no_argument,
+            0,
+            'e',
+        },
+        {
+            "show",
+            no_argument,
+            0,
+            's',
+        },
+        {
+            "part",
+            required_argument,
+            0,
+            'p',
+        },
+        {
+            "install",
+            no_argument,
+            0,
+            'i',
+        },
+        {
+            "variant",
+            required_argument,
+            0,
+            'I',
+        },
+        {
+            "list",
+            no_argument,
+            0,
+            'l',
+        },
+        {
+            "read",
+            required_argument,
+            0,
+            'r',
+        },
+        {
+            "force",
+            no_argument,
+            0,
+            'F',
+        },
+        { 0, 0, 0, 0 },
     };
 
-    while ((opt = getopt_long(argc, argv, "hvt:w:silp:c:d:r:I:e",
-                   long_options, &long_index )) != -1)
-    {
-        switch (opt)
-        {
-            case 'h':
-                help_part();
-                return 0;
-            case 'v':
-                pb_inc_verbosity();
+    while ((opt = getopt_long(argc, argv, "hvt:w:silp:c:d:r:I:e", long_options, &long_index)) !=
+           -1) {
+        switch (opt) {
+        case 'h':
+            help_part();
+            return 0;
+        case 'v':
+            pb_inc_verbosity();
             break;
-            case 't':
-                transport = (const char *) optarg;
+        case 't':
+            transport = (const char *)optarg;
             break;
-            case 'l':
-                flag_list = true;
+        case 'l':
+            flag_list = true;
             break;
-            case 'i':
-                flag_install = true;
+        case 'i':
+            flag_install = true;
             break;
-            case 'I':
-                flag_install = true;
-                install_variant = strtol(optarg, NULL, 0);
+        case 'I':
+            flag_install = true;
+            install_variant = strtol(optarg, NULL, 0);
             break;
-            case 'w':
-                flag_write = true;
-                filename = (const char *) optarg;
+        case 'w':
+            flag_write = true;
+            filename = (const char *)optarg;
             break;
-            case 'c':
-                flag_verify = true;
-                filename = (const char *) optarg;
+        case 'c':
+            flag_verify = true;
+            filename = (const char *)optarg;
             break;
-            case 'e':
-                flag_erase = true;
+        case 'e':
+            flag_erase = true;
             break;
-            case 'r':
-                flag_read = true;
-                filename = (const char *) optarg;
+        case 'r':
+            flag_read = true;
+            filename = (const char *)optarg;
             break;
-            case 'p':
-                part_uuid = (const char *) optarg;
+        case 'p':
+            part_uuid = (const char *)optarg;
             break;
-            case 's':
-                flag_show = true;
+        case 's':
+            flag_show = true;
             break;
-            case 'd':
-                device_uuid = (const char *) optarg;
+        case 'd':
+            device_uuid = (const char *)optarg;
             break;
-            case '?':
-                fprintf(stderr, "Unknown option: %c\n", optopt);
-                return -1;
+        case '?':
+            fprintf(stderr, "Unknown option: %c\n", optopt);
+            return -1;
             break;
-            case ':':
-                fprintf(stderr, "Missing arg for %c\n", optopt);
-                return -1;
+        case ':':
+            fprintf(stderr, "Missing arg for %c\n", optopt);
+            return -1;
             break;
-            default:
-               return -1;
+        default:
+            return -1;
         }
     }
 
-    if (argc <= 1)
-    {
+    if (argc <= 1) {
         help_part();
         return 0;
     }
@@ -456,23 +492,19 @@ int action_part(int argc, char **argv)
 
     rc = transport_init_helper(&ctx, transport, device_uuid);
 
-    if (rc != PB_RESULT_OK)
-    {
+    if (rc != PB_RESULT_OK) {
         fprintf(stderr, "Error: Could not initialize context\n");
         return rc;
     }
 
     rc = ctx->connect(ctx);
 
-    if (rc != PB_RESULT_OK)
-    {
+    if (rc != PB_RESULT_OK) {
         fprintf(stderr, "Error: Could not connect to device\n");
         goto err_free_ctx_out;
     }
 
-    if ((flag_write && !part_uuid) ||
-        (flag_read && !part_uuid)  ||
-        (flag_verify && !part_uuid) ||
+    if ((flag_write && !part_uuid) || (flag_read && !part_uuid) || (flag_verify && !part_uuid) ||
         (flag_erase && !part_uuid)) {
         fprintf(stderr, "Error: missing required --part argument\n");
         goto err_free_ctx_out;
@@ -494,8 +526,7 @@ int action_part(int argc, char **argv)
         rc = part_read(ctx, filename, part_uuid);
 
     if (rc != PB_RESULT_OK) {
-        fprintf(stderr, "Error: Command failed %i (%s)\n", rc,
-                            pb_error_string(rc));
+        fprintf(stderr, "Error: Command failed %i (%s)\n", rc, pb_error_string(rc));
     }
 
 err_free_ctx_out:

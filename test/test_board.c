@@ -1,22 +1,22 @@
-#include <string.h>
 #include "../src/uuid/uuid.h"
 #include <pb-tools/api.h>
-#include <pb-tools/wire.h>
 #include <pb-tools/error.h>
 #include <pb-tools/socket.h>
+#include <pb-tools/wire.h>
+#include <string.h>
 
-#include "nala.h"
-#include "test_command_loop.h"
 #include "command.h"
 #include "common.h"
+#include "nala.h"
+#include "test_command_loop.h"
 
 TEST(board_command)
 {
     int rc;
     struct pb_context *ctx;
 
-    char request[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62" \
-                                "\x01\x4c\xfa\x73\x5c\xe1";
+    char request[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62"
+                     "\x01\x4c\xfa\x73\x5c\xe1";
 
     char response_buffer[1024];
     size_t response_len = sizeof(response_buffer);
@@ -39,11 +39,10 @@ TEST(board_command)
 
     memset(response_buffer, 0, strlen(response_buffer));
     /* Call board command  */
-    rc = pb_api_board_command(ctx, 1, request, strlen(request),
-                                      response_buffer, &response_len);
+    rc = pb_api_board_command(ctx, 1, request, strlen(request), response_buffer, &response_len);
     ASSERT_EQ(rc, PB_RESULT_OK);
     printf("%zu '%s'\n", strlen(response_buffer), response_buffer);
-    ASSERT_MEMORY((char *) response_buffer, "Hello", 5);
+    ASSERT_MEMORY((char *)response_buffer, "Hello", 5);
 
     /* Stop command loop */
     rc = test_command_loop_stop();
@@ -90,4 +89,3 @@ TEST(board_status)
     rc = pb_api_free_context(ctx);
     ASSERT_EQ(rc, PB_RESULT_OK);
 }
-

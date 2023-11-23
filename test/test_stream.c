@@ -1,22 +1,22 @@
-#include <string.h>
 #include "../src/uuid/uuid.h"
 #include <pb-tools/api.h>
-#include <pb-tools/wire.h>
 #include <pb-tools/error.h>
 #include <pb-tools/socket.h>
+#include <pb-tools/wire.h>
+#include <string.h>
 
-#include "nala.h"
-#include "test_command_loop.h"
 #include "command.h"
 #include "common.h"
+#include "nala.h"
+#include "test_command_loop.h"
 
 TEST(stream_init)
 {
     int rc;
     struct pb_context *ctx;
 
-    uint8_t partuuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62" \
-                                "\x01\x4c\xfa\x73\x5c\xe1";
+    uint8_t partuuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62"
+                         "\x01\x4c\xfa\x73\x5c\xe1";
 
     test_command_loop_set_authenticated(true);
 
@@ -47,14 +47,13 @@ TEST(stream_init)
     ASSERT_EQ(rc, PB_RESULT_OK);
 }
 
-
 TEST(stream_write)
 {
     int rc;
     struct pb_context *ctx;
     uint8_t chunk[4096];
-    uint8_t partuuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62" \
-                                "\x01\x4c\xfa\x73\x5c\xe1";
+    uint8_t partuuid[] = "\x2a\xf7\x55\xd8\x8d\xe5\x45\xd5\xa8\x62"
+                         "\x01\x4c\xfa\x73\x5c\xe1";
 
     test_command_loop_set_authenticated(true);
 
@@ -81,8 +80,7 @@ TEST(stream_write)
     uint8_t buffer_id = 0;
     uint64_t offset = 0;
 
-    while(chunks_to_write)
-    {
+    while (chunks_to_write) {
         rc = pb_api_stream_prepare_buffer(ctx, buffer_id, chunk, sizeof(chunk));
         ASSERT_EQ(rc, PB_RESULT_OK);
 
@@ -113,4 +111,3 @@ TEST(stream_unaligned_offset)
 TEST(stream_out_of_bounds)
 {
 }
-

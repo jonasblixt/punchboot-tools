@@ -1,9 +1,9 @@
+#include <bpak/bpak.h>
+#include <pb-tools/api.h>
+#include <pb-tools/pb-tools.h>
+#include <pb-tools/wire.h>
 #include <stdlib.h>
 #include <string.h>
-#include <pb-tools/pb-tools.h>
-#include <pb-tools/api.h>
-#include <pb-tools/wire.h>
-#include <bpak/bpak.h>
 
 PB_EXPORT int pb_api_boot_activate(struct pb_context *ctx, uint8_t *uuid)
 {
@@ -20,8 +20,7 @@ PB_EXPORT int pb_api_boot_activate(struct pb_context *ctx, uint8_t *uuid)
         memcpy(activate.uuid, uuid, 16);
     }
 
-    pb_wire_init_command2(&cmd, PB_CMD_PART_ACTIVATE, &activate,
-                                    sizeof(activate));
+    pb_wire_init_command2(&cmd, PB_CMD_PART_ACTIVATE, &activate, sizeof(activate));
 
     rc = ctx->write(ctx, &cmd, sizeof(cmd));
 
@@ -36,8 +35,12 @@ PB_EXPORT int pb_api_boot_activate(struct pb_context *ctx, uint8_t *uuid)
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
     return result.result_code;
 }
 
@@ -58,9 +61,7 @@ PB_EXPORT int pb_api_boot_part(struct pb_context *ctx, uint8_t *uuid, bool verbo
     else
         boot_part_command.verbose = 0;
 
-    pb_wire_init_command2(&cmd, PB_CMD_BOOT_PART,
-                                    &boot_part_command,
-                                    sizeof(boot_part_command));
+    pb_wire_init_command2(&cmd, PB_CMD_BOOT_PART, &boot_part_command, sizeof(boot_part_command));
 
     rc = ctx->write(ctx, &cmd, sizeof(cmd));
 
@@ -75,23 +76,25 @@ PB_EXPORT int pb_api_boot_part(struct pb_context *ctx, uint8_t *uuid, bool verbo
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
 
     return result.result_code;
 }
 
-PB_EXPORT int pb_api_boot_ram(struct pb_context *ctx,
-                    const void *bpak_image,
-                    uint8_t *uuid,
-                    bool verbose)
+PB_EXPORT int
+pb_api_boot_ram(struct pb_context *ctx, const void *bpak_image, uint8_t *uuid, bool verbose)
 {
     int rc;
     struct pb_command cmd;
     struct pb_command_ram_boot boot_cmd;
     struct pb_result result;
     struct pb_device_capabilities caps;
-    struct bpak_header *header = (struct bpak_header *) bpak_image;
+    struct bpak_header *header = (struct bpak_header *)bpak_image;
 
     rc = pb_api_device_read_caps(ctx, &caps);
 
@@ -100,12 +103,10 @@ PB_EXPORT int pb_api_boot_ram(struct pb_context *ctx,
 
     ctx->d(ctx, 2, "%s: call\n", __func__);
 
-    if (bpak_valid_header(header) != BPAK_OK)
-    {
+    if (bpak_valid_header(header) != BPAK_OK) {
         ctx->d(ctx, 0, "%s: Invalid BPAK header\n", __func__);
         return -PB_RESULT_ERROR;
     }
-
 
     memset(&boot_cmd, 0, sizeof(boot_cmd));
 
@@ -156,33 +157,30 @@ PB_EXPORT int pb_api_boot_ram(struct pb_context *ctx,
         return result.result_code;
 
     /* Stream image */
-    bpak_foreach_part(header, p)
-    {
+    bpak_foreach_part(header, p) {
         if (!p->id)
             break;
 
-        uint8_t *partp = ((uint8_t *) header) + bpak_part_offset(header ,p);
+        uint8_t *partp = ((uint8_t *)header) + bpak_part_offset(header, p);
         size_t part_size = bpak_part_size(p);
 
-        ctx->d(ctx, 1, "%s: Loading part %x, %li bytes\n", __func__,
-                        p->id, part_size);
+        ctx->d(ctx, 1, "%s: Loading part %x, %li bytes\n", __func__, p->id, part_size);
 
         size_t bytes_to_transfer = part_size;
         size_t chunk = 0;
 
-        ctx->d(ctx, 2, "%s: Transfer chunk size: %i bytes\n", __func__,
-                    caps.chunk_transfer_max_bytes);
+        ctx->d(
+            ctx, 2, "%s: Transfer chunk size: %i bytes\n", __func__, caps.chunk_transfer_max_bytes);
 
-        while (bytes_to_transfer)
-        {
-            chunk = bytes_to_transfer > caps.chunk_transfer_max_bytes? \
-                    caps.chunk_transfer_max_bytes:bytes_to_transfer;
+        while (bytes_to_transfer) {
+            chunk = bytes_to_transfer > caps.chunk_transfer_max_bytes
+                        ? caps.chunk_transfer_max_bytes
+                        : bytes_to_transfer;
 
             ctx->d(ctx, 2, "%s: writing %li bytes\n", __func__, chunk);
             rc = ctx->write(ctx, partp, chunk);
 
-            if (rc != PB_RESULT_OK)
-            {
+            if (rc != PB_RESULT_OK) {
                 ctx->d(ctx, 0, "%s: write error %i\n", __func__, rc);
                 return rc;
             }
@@ -208,16 +206,18 @@ PB_EXPORT int pb_api_boot_ram(struct pb_context *ctx,
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
 
     return result.result_code;
 }
 
-PB_EXPORT int pb_api_boot_status(struct pb_context *ctx,
-                       uint8_t *uuid,
-                       char *status_message,
-                       size_t len)
+PB_EXPORT int
+pb_api_boot_status(struct pb_context *ctx, uint8_t *uuid, char *status_message, size_t len)
 {
     int rc;
     struct pb_command cmd;
@@ -241,7 +241,7 @@ PB_EXPORT int pb_api_boot_status(struct pb_context *ctx,
     if (!pb_wire_valid_result(&result))
         return -PB_RESULT_ERROR;
 
-    boot_status = (struct pb_result_boot_status *) result.response;
+    boot_status = (struct pb_result_boot_status *)result.response;
 
     if (len > sizeof(boot_status->status))
         memcpy(status_message, boot_status->status, sizeof(boot_status->status));
@@ -250,8 +250,12 @@ PB_EXPORT int pb_api_boot_status(struct pb_context *ctx,
 
     memcpy(uuid, boot_status->uuid, 16);
 
-    ctx->d(ctx, 2, "%s: return %i (%s)\n", __func__, result.result_code,
-                                        pb_error_string(result.result_code));
+    ctx->d(ctx,
+           2,
+           "%s: return %i (%s)\n",
+           __func__,
+           result.result_code,
+           pb_error_string(result.result_code));
 
     return result.result_code;
 }
